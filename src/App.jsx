@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import './App.css'
+
 
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 
@@ -29,6 +29,9 @@ function App() {
           <strong>Backend status</strong>
           <p>{status}</p>
         </div>
+        <h1 class="text-3xl font-bold text-blue-600 underline">
+          Tailwind Berhasil Dipasang!
+        </h1>
       </div>
     </main>
   )
