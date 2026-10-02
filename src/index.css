@@ -1,3 +1,15 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* sembunyikan scrollbar tapi tetap bisa scroll */
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar { display: none; }
+
+/* reset max-height di breakpoint lg */
+@media (min-width: 1024px) {
+  aside { max-height: none !important; }
+}

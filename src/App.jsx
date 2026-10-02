@@ -1,20 +1,25 @@
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import HomePage from './pages/HomePage'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
+import Maps from './pages/Maps'
 
 function App() {
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Navbar*/}
-      <Navbar />
+    <Router>
+      <div className="min-h-screen bg-gray-50 flex flex-col justify-between">
+        <Navbar />
 
-      {/* Konten Halaman */}
-      <main>
-        <HomePage />
-      </main>
+        <main className="flex-1">
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/maps" element={<Maps />} />
+          </Routes>
+        </main>
 
-      <Footer />
-    </div>
+        <Footer />
+      </div>
+    </Router>
   )
 }
 
