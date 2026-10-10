@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { buildGraph, planTrips, dist, SPEED, WAIT_MIN, MAX_WALK_KM } from '../lib/routing'
+import { readOD } from '../lib/geocode'
 
 /* ────────────────────────────────────────────────────────────
    Konfigurasi
@@ -20,6 +21,9 @@ const CHIP_COLOR = { biskita: '#F97316', angkot: '#0D9F6E' }
 const PALETTE = ['#16A34A', '#2563EB', '#F97316', '#9333EA', '#0D9488', '#DB2777', '#CA8A04', '#0891B2', '#65A30D', '#7C3AED']
 // Ubah warna rute tertentu di sini bila perlu, mis. { K2: { color: '#C026D3' } }
 const OVERRIDES = { K1: { color: '#DC2626' } }
+
+
+
 
 /* ────────────────────────────────────────────────────────────
    Helper parsing GeoJSON
@@ -353,7 +357,7 @@ function PlanDetail({ plan, onBack }) {
         })
         steps.push({
             icon: isBus ? 'bus' : 'car', bg: 'text-white', color: CHIP_COLOR[r.kind], label: isBus ? 'Naik bus' : 'Naik angkot',
-            chip: r.ref, title: `Arah ${l.part.dir || r.to || r.from}`,
+            chip: r.ref, title: `Arah ${l.reversed ? r.from : (l.part.dir || r.to || r.from)}`,
             sub: `Perjalanan ~${fmtKm(l.km)} • ${Math.round(l.rideMin)} mnt • Tarif ${r.fare}`,
             time: hhmm(l.boardAt),
         })
@@ -493,15 +497,19 @@ function Maps() {
     const [status, setStatus] = useState('loading') // loading | ready | error
     const [error, setError] = useState('')
 
-    const [tab, setTab] = useState('trayek') // 'petunjuk' | 'trayek'
+    // Asal & tujuan dari landing page (/maps?asal=lat,lng&tujuan=lat,lng), atau null
+    const [init] = useState(readOD)
+
+    const [tab, setTab] = useState(init ? 'petunjuk' : 'trayek') // 'petunjuk' | 'trayek'
     const [mode, setMode] = useState('biskita') // 'biskita' | 'angkot'
     const [query, setQuery] = useState('')
     const [selectedId, setSelectedId] = useState(null)
 
-    const [asal, setAsal] = useState(null)
-    const [tujuan, setTujuan] = useState(null)
-    const [pick, setPick] = useState('asal')
+    const [asal, setAsal] = useState(init?.asal ?? null)
+    const [tujuan, setTujuan] = useState(init?.tujuan ?? null)
+    const [pick, setPick] = useState(init ? null : 'asal')
     const [planIdx, setPlanIdx] = useState(null)
+    const [autoPlan, setAutoPlan] = useState(!!init) // buka rute tercepat otomatis, sekali saja
     const [geoMsg, setGeoMsg] = useState('')
 
     const mapEl = useRef(null)
@@ -552,8 +560,25 @@ function Maps() {
 
     const selected = tab === 'trayek' ? routes.find((r) => r.id === selectedId) || null : null
     const graph = useMemo(() => buildGraph(allRoutes), [allRoutes])
+
+    // Diagnosa (hanya saat dev): bagian angkot yang terdeteksi satu arah / loop
+    useEffect(() => {
+        if (import.meta.env.DEV && graph.loops.length) {
+            console.info(
+                '[TransGIS] bagian satu arah (loop) terdeteksi:',
+                graph.loops.map((l) => `${l.ref}: km ${l.fromKm.toFixed(1)}–${l.toKm.toFixed(1)}`),
+            )
+        }
+    }, [graph])
     const plans = useMemo(() => (asal && tujuan ? planTrips(graph, asal, tujuan) : []), [graph, asal, tujuan])
     const plan = tab === 'petunjuk' && planIdx != null ? plans[planIdx] || null : null
+
+    // Datang dari landing page: setelah data rute siap, langsung tampilkan rute tercepat
+    useEffect(() => {
+        if (!autoPlan || status !== 'ready') return
+        if (plans.length) setPlanIdx(0)
+        setAutoPlan(false)
+    }, [autoPlan, status, plans])
 
     /* ── Inisialisasi peta (sekali) ── */
     useEffect(() => {
@@ -675,7 +700,7 @@ function Maps() {
         const all = [asal, tujuan]
         plan.legs.forEach((l) => {
             L.polyline([l.walk.from, l.walk.to], walk).addTo(pg)
-            const ride = l.part.pts.slice(l.iA, l.iB + 1)
+            const ride = l.ridePts
             all.push(...ride)
             L.polyline(ride, { color: '#fff', weight: 11, opacity: 0.9 }).addTo(pg)
             L.polyline(ride, { color: l.route.color, weight: 7 }).addTo(pg)

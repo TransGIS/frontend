@@ -1,13 +1,22 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 function Navbar() {
     const [isOpen, setIsOpen] = useState(false)
+    const [hash, setHash] = useState(window.location.hash)
     const path = window.location.pathname
 
+    // Perbarui penanda aktif saat hash berubah (klik link #tarif / tombol back)
+    useEffect(() => {
+        const onHash = () => setHash(window.location.hash)
+        window.addEventListener('hashchange', onHash)
+        return () => window.removeEventListener('hashchange', onHash)
+    }, [])
+
+    // "Info Tarif & Rute" bukan halaman baru, melainkan section #tarif di landing page
     const navLinks = [
-        { href: '/', label: 'Home' },
-        { href: '/maps', label: 'Peta Perjalanan' },
-        { href: '/tarif', label: 'Info Tarif & Rute' },
+        { href: '/', label: 'Home', active: path === '/' && hash !== '#tarif' },
+        { href: '/maps', label: 'Peta Perjalanan', active: path === '/maps' },
+        { href: '/#tarif', label: 'Info Tarif & Rute', active: path === '/' && hash === '#tarif' },
     ]
 
     return (
@@ -24,11 +33,11 @@ function Navbar() {
 
                 {/* Desktop Nav Links */}
                 <nav className="hidden md:flex items-center gap-8">
-                    {navLinks.map(({ href, label }) => (
+                    {navLinks.map(({ href, label, active }) => (
                         <a
                             key={href}
                             href={href}
-                            className={`text-sm font-medium transition-colors ${path === href
+                            className={`text-sm font-medium transition-colors ${active
                                 ? 'text-[#F97316] border-b-2 border-[#F97316] pb-0.5'
                                 : 'text-gray-700 hover:text-[#1B3A8C]'
                                 }`}
@@ -60,11 +69,12 @@ function Navbar() {
             {/* Mobile Nav Dropdown */}
             {isOpen && (
                 <nav className="md:hidden bg-white border-b border-gray-100 px-4 pt-2 pb-4 space-y-1 shadow-lg">
-                    {navLinks.map(({ href, label }) => (
+                    {navLinks.map(({ href, label, active }) => (
                         <a
                             key={href}
                             href={href}
-                            className={`block px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${path === href
+                            onClick={() => setIsOpen(false)}
+                            className={`block px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${active
                                 ? 'font-semibold text-[#F97316] bg-orange-50'
                                 : 'text-gray-700 hover:text-[#1B3A8C] hover:bg-gray-50'
                                 }`}

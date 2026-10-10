@@ -4,10 +4,14 @@
 
    Model graf:
    - Node  = titik di sepanjang jalur (di-downsample tiap STEP_KM).
-   - Edge "ride"  = node → node berikutnya di jalur yang sama (searah).
+   - Edge "ride"  = node → node berikutnya di jalur yang sama.
+                    Angkot yang hanya digambar 1 garis dianggap BOLAK-BALIK
+                    (edge ride juga dibuat ke arah sebaliknya).
    - Edge "xfer"  = node → node terdekat di jalur LAIN (jalan kaki + tunggu).
    - Asal / tujuan = sumber & target virtual (jalan kaki ke/dari jalur).
    ──────────────────────────────────────────────────────────── */
+
+import { ONEWAY_ZONES } from '../data/oneway-zones'
 
 export const SPEED = { biskita: 18, angkot: 15 } // km/jam
 export const WAIT_MIN = 5
@@ -16,6 +20,11 @@ export const DETOUR = 1.25 // faktor jalan kaki tidak lurus
 const WALK_KMH = 4.8
 const TRANSFER_KM = 0.35 // jarak maks pindah jalur
 const STEP_KM = 0.2 // jarak antar node
+const OPPOSITE_KM = 0.5 // toleransi ujung jalur dianggap "arah sebaliknya"
+const OVERLAP_KM = 0.1 // jarak maks dua garis dianggap menimpa jalan yang sama
+const LOOP_TURN_DEG = 270 // total belokan searah yang dianggap "berputar" (loop)
+const LOOP_MIN_KM = 1 // panjang minimum loop
+const LOOP_TRIM_DEG = 10 // belokan lebih kecil dari ini di ujung loop dianggap lurus
 const FARE_NUM = { biskita: [4000, 4000], angkot: [5000, 7000] }
 
 // Tiap profil = satu "gaya" pencarian → hasil beragam
@@ -71,15 +80,110 @@ class MinHeap {
     }
 }
 
+/* Apakah bagian jalur `o` adalah arah SEBALIKNYA dari `p`?
+   (1) ujung awal o ≈ ujung akhir p dan sebaliknya, atau
+   (2) o menimpa p (jalan yang sama) tetapi urutan titiknya terbalik. */
+function isOpposite(p, o) {
+    const pa = p.pts[0]
+    const pb = p.pts[p.pts.length - 1]
+    if (dist(o.pts[0], pb) < OPPOSITE_KM && dist(o.pts[o.pts.length - 1], pa) < OPPOSITE_KM) return true
+
+    // (2) cuplik ±20 titik p, cari titik terdekat di o
+    const SAMPLES = 20
+    const step = Math.max(1, Math.floor(p.pts.length / SAMPLES))
+    const hits = []
+    let total = 0
+    for (let k = 0; k < p.pts.length; k += step) {
+        total++
+        let bi = -1
+        let bd = Infinity
+        for (let j = 0; j < o.pts.length; j++) {
+            const d = dist(p.pts[k], o.pts[j])
+            if (d < bd) { bd = d; bi = j }
+        }
+        if (bd < OVERLAP_KM) hits.push(bi)
+    }
+    if (hits.length < total * 0.6 || hits.length < 2) return false
+    return hits[0] > hits[hits.length - 1] // searah p → o berjalan mundur
+}
+
+/* Titik di dalam zona satu arah manual? */
+function inOneWayZone(pos, ref) {
+    return ONEWAY_ZONES.some(
+        (z) =>
+            (!z.refs || z.refs.includes(ref)) &&
+            pos[0] >= z.bounds[0] && pos[1] >= z.bounds[1] &&
+            pos[0] <= z.bounds[2] && pos[1] <= z.bounds[3],
+    )
+}
+
+/* Deteksi bagian garis yang MEMUTAR (loop, mis. SSA Kebun Raya).
+   Garis dianggap berputar bila total belokan searah dalam satu rentang
+   ≥ LOOP_TURN_DEG derajat pada rentang ≥ LOOP_MIN_KM. Mengembalikan flag per node. */
+function loopFlags(pos, cums) {
+    const n = pos.length
+    const flags = new Array(n).fill(false)
+    if (n < 6) return flags
+    const bearing = (a, b) => Math.atan2((b[1] - a[1]) * Math.cos(a[0] * RAD), b[0] - a[0]) / RAD
+    const brg = []
+    for (let i = 0; i < n - 1; i++) brg.push(bearing(pos[i], pos[i + 1]))
+    // turn[i] = perubahan arah di node i (1..n-2), -180..180
+    const turn = new Array(n).fill(0)
+    for (let i = 1; i < n - 1; i++) {
+        let d = brg[i] - brg[i - 1]
+        while (d > 180) d -= 360
+        while (d <= -180) d += 360
+        turn[i] = d
+    }
+    for (let a = 0; a < n - 2; a++) {
+        let acc = 0
+        for (let b = a + 2; b < n; b++) {
+            acc += turn[b - 1]
+            if (Math.abs(acc) < LOOP_TURN_DEG || cums[b] - cums[a] < LOOP_MIN_KM) continue
+            // pangkas bagian lurus di kedua ujung rentang
+            let s = a
+            let e = b
+            while (s < e && Math.abs(turn[s + 1]) < LOOP_TRIM_DEG) s++
+            while (e > s && Math.abs(turn[e - 1]) < LOOP_TRIM_DEG) e--
+            for (let k = s; k <= e; k++) flags[k] = true
+            break
+        }
+    }
+    return flags
+}
+
+/* Kelompokkan bagian jalur per nomor rute (ref) + moda. Arah pergi & pulang
+   sering tersimpan sebagai rute terpisah dengan ref yang sama. */
+function groupPartsByRef(routes) {
+    const m = new Map()
+    routes.forEach((route) => {
+        const k = `${route.kind}|${route.ref}`
+        if (!m.has(k)) m.set(k, [])
+        route.parts.forEach((part) => m.get(k).push(part))
+    })
+    return m
+}
+
 /* ── Bangun graf dari daftar rute (dipanggil sekali per set rute) ── */
 export function buildGraph(routes) {
     const nodes = []
     const adj = []
+    const byRef = groupPartsByRef(routes)
+
+    const loops = [] // bagian jalur satu arah yang terdeteksi (untuk diagnosa)
 
     routes.forEach((route) => {
         route.parts.forEach((part, pi) => {
             const key = `${route.id}#${pi}`
+            // Angkot 1 garis = bolak-balik. Kalau arah sebaliknya sudah digambar
+            // (di rute ini ATAU rute lain dengan nomor yang sama), jalur ini tetap
+            // searah — tidak boleh dinaiki mundur.
+            const bidir =
+                route.kind === 'angkot' &&
+                !byRef.get(`${route.kind}|${route.ref}`).some((o) => o !== part && isOpposite(part, o))
             const n = part.pts.length
+            const ids = [] // node milik bagian jalur ini, berurutan
+            const ws = [] // ws[k] = bobot menit ids[k-1] → ids[k]
             let prev = -1
             let lastCum = 0
             for (let i = 0; i < n; i++) {
@@ -88,12 +192,37 @@ export function buildGraph(routes) {
                 const id = nodes.length
                 nodes.push({ pos: part.pts[i], route, part, key, i })
                 adj.push([])
+                let w = 0
                 if (prev !== -1) {
                     const km = part.cum[i] - part.cum[nodes[prev].i]
-                    adj[prev].push({ to: id, type: 'ride', w: (km / SPEED[route.kind]) * 60 })
+                    w = (km / SPEED[route.kind]) * 60
+                    adj[prev].push({ to: id, type: 'ride', w })
                 }
+                ids.push(id)
+                ws.push(w)
                 prev = id
                 lastCum = part.cum[i]
+            }
+
+            if (!bidir || ids.length < 2) return
+
+            // Jalur balik hanya di bagian yang BUKAN loop / zona satu arah
+            const cums = ids.map((id) => part.cum[nodes[id].i])
+            const oneWay = loopFlags(ids.map((id) => nodes[id].pos), cums)
+            ids.forEach((id, k) => { if (!oneWay[k] && inOneWayZone(nodes[id].pos, route.ref)) oneWay[k] = true })
+
+            for (let k = 1; k < ids.length; k++) {
+                if (oneWay[k - 1] && oneWay[k]) continue
+                adj[ids[k]].push({ to: ids[k - 1], type: 'ride', w: ws[k] })
+            }
+
+            // catat bagian satu arah (rentang berurutan) untuk diagnosa
+            for (let k = 0; k < ids.length; k++) {
+                if (!oneWay[k]) continue
+                let e = k
+                while (e + 1 < ids.length && oneWay[e + 1]) e++
+                loops.push({ ref: route.ref, route: route.id, fromKm: cums[k], toKm: cums[e], fromId: ids[k], toId: ids[e] })
+                k = e
             }
         })
     })
@@ -120,6 +249,9 @@ export function buildGraph(routes) {
                 for (const c of cell) {
                     const o = nodes[c]
                     if (o.key === nd.key) continue
+                    // Jangan pindah antar arah pada nomor rute yang sama (A→B lalu
+                    // "pindah" ke arah sebaliknya = bolak-balik tanpa guna).
+                    if (o.route.ref === nd.route.ref && o.route.kind === nd.route.kind) continue
                     const d = dist(nd.pos, o.pos)
                     if (d > TRANSFER_KM) continue
                     const cur = best.get(o.key)
@@ -130,7 +262,7 @@ export function buildGraph(routes) {
         for (const b of best.values()) adj[id].push({ to: b.to, type: 'xfer', d: b.d })
     })
 
-    return { nodes, adj }
+    return { nodes, adj, loops }
 }
 
 /* ── Node terdekat per jalur dalam jarak jalan maksimum ── */
@@ -202,7 +334,13 @@ function toPlan(g, path, A, B, t0) {
     for (const l of legs) {
         l.iA = l.from.i
         l.iB = l.to.i
-        l.km = l.part.cum[l.iB] - l.part.cum[l.iA]
+        // Angkot bisa dinaiki ke arah sebaliknya dari urutan titik di GeoJSON
+        l.reversed = l.iB < l.iA
+        l.km = Math.abs(l.part.cum[l.iB] - l.part.cum[l.iA])
+        // titik jalur yang dilewati, selalu berurutan dari naik → turun
+        l.ridePts = l.reversed
+            ? l.part.pts.slice(l.iB, l.iA + 1).reverse()
+            : l.part.pts.slice(l.iA, l.iB + 1)
         l.rideMin = (l.km / SPEED[l.route.kind]) * 60
         const wk = dist(at, l.from.pos) * DETOUR
         l.walk = { km: wk, min: (wk / WALK_KMH) * 60, from: at, to: l.from.pos }
