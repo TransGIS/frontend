@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import { buildGraph, planTrips, dist, SPEED, WAIT_MIN, MAX_WALK_KM } from '../lib/routing'
 
 /* ────────────────────────────────────────────────────────────
    Konfigurasi
@@ -9,16 +10,11 @@ import 'leaflet/dist/leaflet.css'
 const BASE = import.meta.env.BASE_URL
 const FILES = {
     biskita: `${BASE}rute/biskita-bogor.geojson`,
-    kota: `${BASE}rute/angkot-kota-kabupaten-bogor.geojson`,
-    kabupaten: `${BASE}rute/angkot-kabupaten-bogor.geojson`,
+    angkot: `${BASE}rute/angkot-kota-kabupaten-bogor.geojson`,
 }
 
 const CENTER = [-6.5971, 106.806]
 const FARE = { biskita: 'Rp 4.000', angkot: 'Rp 5.000-7.000' }
-const SPEED = { biskita: 18, angkot: 15 } // km/jam, untuk estimasi
-const WALK_KMH = 4.8
-const MAX_WALK_KM = 1.5
-const WAIT_MIN = 5
 const CHIP_COLOR = { biskita: '#F97316', angkot: '#0D9F6E' }
 
 const PALETTE = ['#16A34A', '#2563EB', '#F97316', '#9333EA', '#0D9488', '#DB2777', '#CA8A04', '#0891B2', '#65A30D', '#7C3AED']
@@ -26,16 +22,9 @@ const PALETTE = ['#16A34A', '#2563EB', '#F97316', '#9333EA', '#0D9488', '#DB2777
 const OVERRIDES = { K1: { color: '#DC2626' } }
 
 /* ────────────────────────────────────────────────────────────
-   Helper geometri & parsing GeoJSON
+   Helper parsing GeoJSON
+   (geometri jarak & dijkstra sekarang ada di src/lib/routing.js)
    ──────────────────────────────────────────────────────────── */
-const RAD = Math.PI / 180
-function dist(a, b) {
-    const dLat = (b[0] - a[0]) * RAD
-    const dLng = (b[1] - a[1]) * RAD
-    const h = Math.sin(dLat / 2) ** 2 + Math.cos(a[0] * RAD) * Math.cos(b[0] * RAD) * Math.sin(dLng / 2) ** 2
-    return 12742 * Math.asin(Math.sqrt(h))
-}
-
 function makePart(pts, dir) {
     const cum = [0]
     for (let i = 1; i < pts.length; i++) cum.push(cum[i - 1] + dist(pts[i - 1], pts[i]))
@@ -110,67 +99,44 @@ function buildRoutes(fc, kind, { exclude = new Set(), stopFeatures = [] } = {}) 
 }
 
 // Halte BisKita: ambil titik ber-role "stop" milik rute, urutkan sepanjang jalur utama.
+// Bila tiap halte punya "seq" di @relations (urutan manual), urutan itu dipakai untuk semua halte.
 function attachStops(route, stopFeatures) {
-    const mine = stopFeatures.filter((s) =>
-        s.properties?.['@relations']?.some((x) => x.role === 'stop' && String(x.reltags?.ref) === route.ref),
-    )
-    const placed = mine.map((s) => {
+    const mine = stopFeatures.flatMap((s) => {
+        const rel = s.properties?.['@relations']?.find((x) => x.role === 'stop' && String(x.reltags?.ref) === route.ref)
+        return rel ? [{ s, seq: rel.seq }] : []
+    })
+    const placed = mine.map(({ s, seq }) => {
         const pos = [s.geometry.coordinates[1], s.geometry.coordinates[0]]
         let best = { pi: 0, i: 0, d: Infinity }
         route.parts.forEach((part, pi) => {
             const n = nearest(part, pos)
             if (n.d < best.d) best = { pi, i: n.i, d: n.d }
         })
-        return { pos, name: s.properties?.name || null, ...best }
+        return { pos, name: s.properties?.name || null, seq, ...best }
     })
     if (!placed.length) return
+    const toStop = (s, n) => ({ pos: s.pos, name: s.name || `Halte ${n + 1}`, named: !!s.name })
+    route.allStops = placed.map(toStop)
+
+    if (placed.every((s) => Number.isFinite(s.seq))) {
+        route.stops = [...placed].sort((a, b) => a.seq - b.seq).map(toStop)
+        return
+    }
+    // Tanpa seq: urutkan sepanjang jalur utama (bagian jalur dengan halte terbanyak).
     const count = {}
     placed.forEach((s) => { count[s.pi] = (count[s.pi] || 0) + 1 })
     const primary = Number(Object.keys(count).sort((a, b) => count[b] - count[a])[0])
-    route.allStops = placed.map((s, n) => ({ pos: s.pos, name: s.name || `Halte ${n + 1}` }))
     route.stops = placed
         .filter((s) => s.pi === primary)
         .sort((a, b) => a.i - b.i)
-        .map((s, n) => ({ pos: s.pos, name: s.name || `Halte ${n + 1}` }))
-}
-
-/* Pencari rute langsung (tanpa transit): asal → naik → turun → tujuan */
-function planTrips(routes, A, B) {
-    const out = []
-    for (const r of routes) {
-        let best = null
-        for (const part of r.parts) {
-            const a = nearest(part, A)
-            const b = nearest(part, B)
-            if (a.d > MAX_WALK_KM || b.d > MAX_WALK_KM || b.i <= a.i) continue
-            const ride = part.cum[b.i] - part.cum[a.i]
-            if (ride < 0.3) continue
-            const walkAMin = ((a.d * 1.25) / WALK_KMH) * 60
-            const walkBMin = ((b.d * 1.25) / WALK_KMH) * 60
-            const rideMin = (ride / SPEED[r.kind]) * 60
-            const total = walkAMin + WAIT_MIN + rideMin + walkBMin
-            if (!best || total < best.total) {
-                best = { route: r, part, a, b, ride, rideMin, walkAMin, walkBMin, total, walkKm: (a.d + b.d) * 1.25 }
-            }
-        }
-        if (best) out.push(best)
-    }
-    out.sort((x, y) => x.total - y.total)
-    const top = out.slice(0, 4)
-    if (top.length) top[0].tag = 'Tercepat'
-    const rest = top.slice(1).sort((x, y) => x.walkKm - y.walkKm)
-    if (rest.length && rest[0].walkKm < top[0].walkKm) rest[0].tag = 'Sedikit Jalan'
-    const t0 = Date.now()
-    return top.map((p) => ({
-        ...p,
-        depart: t0 + p.walkAMin * 60000,
-        arrive: t0 + p.total * 60000,
-    }))
+        .map(toStop)
 }
 
 const hhmm = (t) =>
     new Date(t).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false }).replace('.', ':')
 const fmtKm = (km) => `${km.toFixed(1)} km`
+const fmtRp = (n) => `Rp ${n.toLocaleString('id-ID')}`
+const fmtFare = (f) => (f.lo === f.hi ? fmtRp(f.lo) : `${fmtRp(f.lo)}–${fmtRp(f.hi)}`)
 
 /* ────────────────────────────────────────────────────────────
    Ikon
@@ -279,9 +245,10 @@ function Timeline({ items }) {
 
 function RouteDetail({ route, onBack }) {
     const items = route.stops.length
-        ? route.stops.map((s, i) => ({
+        ? route.stops.map((s) => ({
             name: s.name,
-            sub: i === 0 ? route.from : `${s.pos[0].toFixed(5)}, ${s.pos[1].toFixed(5)}`,
+            // halte bernama tidak perlu koordinat; halte tanpa nama tetap menampilkannya
+            sub: s.named ? undefined : `${s.pos[0].toFixed(5)}, ${s.pos[1].toFixed(5)}`,
         }))
         : [
             { name: route.from, sub: 'Pangkalan / titik awal rute' },
@@ -336,23 +303,24 @@ function PickField({ label, color, value, placeholder, active, onPick, onClear }
 }
 
 function PlanChips({ plan }) {
-    const Mode = plan.route.kind === 'biskita' ? 'bus' : 'car'
-    const walk = (m) => (
-        <span className="inline-flex items-center gap-1 bg-white text-gray-800 text-xs font-semibold rounded px-2 py-1">
+    const walk = (m, key) => (
+        <span key={key} className="inline-flex items-center gap-1 bg-white text-gray-800 text-xs font-semibold rounded px-2 py-1">
             <Icon name="walk" className="w-3.5 h-3.5" />{Math.max(1, Math.round(m))}&apos;
         </span>
     )
-    return (
-        <div className="flex flex-wrap items-center gap-1.5">
-            {walk(plan.walkAMin)}
-            <span className="text-blue-300">›</span>
-            <span className="inline-flex items-center gap-1 text-white text-xs font-bold rounded px-2 py-1" style={{ background: CHIP_COLOR[plan.route.kind] }}>
-                <Icon name={Mode} className="w-3.5 h-3.5" />{plan.route.ref} {plan.route.kind === 'biskita' ? 'Bis Kita' : 'Angkot'}
-            </span>
-            <span className="text-blue-300">›</span>
-            {walk(plan.walkBMin)}
-        </div>
-    )
+    const sep = (key) => <span key={key} className="text-blue-300">›</span>
+    const out = []
+    plan.legs.forEach((l, i) => {
+        if (i === 0 || l.walk.min >= 1) out.push(walk(l.walk.min, `w${i}`), sep(`a${i}`))
+        out.push(
+            <span key={`c${i}`} className="inline-flex items-center gap-1 text-white text-xs font-bold rounded px-2 py-1" style={{ background: CHIP_COLOR[l.route.kind] }}>
+                <Icon name={l.route.kind === 'biskita' ? 'bus' : 'car'} className="w-3.5 h-3.5" />{l.route.ref} {l.route.kind === 'biskita' ? 'Bis Kita' : 'Angkot'}
+            </span>,
+            sep(`b${i}`),
+        )
+    })
+    out.push(walk(plan.endWalk.min, 'wend'))
+    return <div className="flex flex-wrap items-center gap-1.5">{out}</div>
 }
 
 const TagPill = ({ tag }) =>
@@ -362,42 +330,46 @@ const TagPill = ({ tag }) =>
 
 function PlanSummary({ plan }) {
     return (
-        <div className="flex items-baseline gap-2">
+        <div className="flex items-baseline gap-2 flex-wrap">
             <span className="text-3xl font-bold text-white">{Math.round(plan.total)}</span>
             <span className="text-lg text-white">mnt</span>
-            <span className="text-xs text-blue-200">• Tiba pukul {hhmm(plan.arrive)}</span>
+            <span className="text-xs text-blue-200">
+                • Tiba pukul {hhmm(plan.arrive)} • {plan.transfers ? `${plan.transfers}x transit` : 'Langsung'}
+            </span>
         </div>
     )
 }
 
 function PlanDetail({ plan, onBack }) {
-    const r = plan.route
-    const isBus = r.kind === 'biskita'
-    const steps = [
-        {
-            icon: 'walk', bg: 'bg-white text-gray-800', label: 'Jalan kaki',
-            title: `Jalan ke jalur ${r.ref}`,
-            sub: `Jarak ~${fmtKm(plan.a.d * 1.25)} • Tiba sebelum ${hhmm(plan.depart + WAIT_MIN * 60000)}`,
-            time: `${Math.max(1, Math.round(plan.walkAMin))} mnt`,
-        },
-        {
+    const steps = []
+    plan.legs.forEach((l, i) => {
+        const r = l.route
+        const isBus = r.kind === 'biskita'
+        steps.push({
+            icon: 'walk', bg: 'bg-white text-gray-800', label: i === 0 ? 'Jalan kaki' : 'Transit',
+            title: i === 0 ? `Jalan ke jalur ${r.ref}` : `Pindah ke jalur ${r.ref}`,
+            sub: `Jarak ~${fmtKm(l.walk.km)} • Tiba sebelum ${hhmm(l.boardAt)}`,
+            time: `${Math.max(1, Math.round(l.walk.min))} mnt`,
+        })
+        steps.push({
             icon: isBus ? 'bus' : 'car', bg: 'text-white', color: CHIP_COLOR[r.kind], label: isBus ? 'Naik bus' : 'Naik angkot',
-            chip: r.ref, title: `Arah ${plan.part.dir || r.to || r.from}`,
-            sub: `Perjalanan ~${fmtKm(plan.ride)} • ${Math.round(plan.rideMin)} mnt • Tarif ${r.fare}`,
-            time: hhmm(plan.depart + WAIT_MIN * 60000),
-        },
-        {
-            icon: 'walk', bg: 'bg-white text-gray-800', label: 'Jalan kaki',
-            title: 'Turun, lalu jalan ke tujuan',
-            sub: `Jarak ~${fmtKm(plan.b.d * 1.25)}`,
-            time: `Tiba ${hhmm(plan.arrive)}`,
-        },
-    ]
+            chip: r.ref, title: `Arah ${l.part.dir || r.to || r.from}`,
+            sub: `Perjalanan ~${fmtKm(l.km)} • ${Math.round(l.rideMin)} mnt • Tarif ${r.fare}`,
+            time: hhmm(l.boardAt),
+        })
+    })
+    steps.push({
+        icon: 'walk', bg: 'bg-white text-gray-800', label: 'Jalan kaki',
+        title: 'Turun, lalu jalan ke tujuan',
+        sub: `Jarak ~${fmtKm(plan.endWalk.km)}`,
+        time: `Tiba ${hhmm(plan.arrive)}`,
+    })
     return (
         <>
             <BackButton onClick={onBack} />
             <PlanSummary plan={plan} />
-            <div className="mt-3 mb-5"><PlanChips plan={plan} /></div>
+            <div className="mt-3 mb-2"><PlanChips plan={plan} /></div>
+            <p className="text-xs text-blue-200 mb-5">Total tarif ~{fmtFare(plan.fare)}</p>
             <ol className="relative">
                 <span className="absolute left-[15px] top-6 bottom-6 w-0.5 bg-white/30" />
                 {steps.map((s, i) => (
@@ -424,6 +396,82 @@ function PlanDetail({ plan, onBack }) {
 }
 
 /* ────────────────────────────────────────────────────────────
+   Popup rute: info singkat + titik awal & titik akhir
+   ──────────────────────────────────────────────────────────── */
+const esc = (s) =>
+    String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
+
+const KIND_LABEL = { biskita: 'Bis Kita', angkot: 'Angkot' }
+
+const tipHtml = (r) =>
+    `<span class="tg-dot" style="background:${r.color}"></span><b>${esc(r.ref)}</b><span>${esc(r.from)}${r.to ? ` → ${esc(r.to)}` : ''}</span>`
+
+function popupHtml(r) {
+    const end = r.to || r.from
+    return `
+<div class="tg-card" style="--c:${r.color}">
+  <div class="tg-bar"></div>
+  <div class="tg-head">
+    <span class="tg-badge">${esc(r.ref)}</span>
+    <div class="tg-headtxt">
+      <div class="tg-kind">${KIND_LABEL[r.kind]}</div>
+      <div class="tg-title">${esc(r.from)}${r.to ? ` <span>→</span> ${esc(r.to)}` : ''}</div>
+    </div>
+  </div>
+  <div class="tg-stats">
+    <div><b>${esc(r.fare)}</b><span>Tarif</span></div>
+    <div><b>~${r.minutes} mnt</b><span>Estimasi</span></div>
+    <div><b>${r.km.toFixed(1).replace('.', ',')} km</b><span>Panjang</span></div>
+  </div>
+  <div class="tg-pass">
+    <ol class="tg-list">
+      <li class="tg-stop tg-end"><i></i><b>${esc(r.from)}</b><small>Titik awal</small></li>
+      <li class="tg-stop tg-end"><i></i><b>${esc(end)}</b><small>Titik akhir</small></li>
+    </ol>
+  </div>
+</div>`
+}
+
+function openRoutePopup(m, r, latlng) {
+    L.popup({ className: 'tg-popup', maxWidth: 300, minWidth: 280, autoPanPadding: [30, 30] })
+        .setLatLng(latlng)
+        .setContent(popupHtml(r))
+        .openOn(m)
+}
+
+const POPUP_CSS = `
+.tg-tip.leaflet-tooltip{display:flex;align-items:center;gap:8px;padding:6px 10px;border:0;border-radius:10px;background:#fff;color:#111827;font-size:12px;box-shadow:0 6px 18px rgba(10,30,80,.22)}
+.tg-tip.leaflet-tooltip::before{display:none}
+.tg-tip .tg-dot{width:10px;height:10px;border-radius:50%;flex:none}
+.tg-tip b{font-weight:700}
+.tg-popup .leaflet-popup-content-wrapper{padding:0;border-radius:16px;overflow:hidden;box-shadow:0 14px 36px rgba(10,30,80,.3)}
+.tg-popup .leaflet-popup-content{margin:0;width:280px!important;font-family:inherit}
+.tg-popup .leaflet-popup-tip{box-shadow:0 6px 12px rgba(10,30,80,.15)}
+.tg-popup a.leaflet-popup-close-button{top:12px;right:10px;width:24px;height:24px;padding:0;font-size:20px;line-height:22px;text-align:center;color:#6B7280}
+.tg-card{color:#111827}
+.tg-bar{height:5px;background:var(--c)}
+.tg-head{display:flex;gap:10px;align-items:flex-start;padding:12px 38px 12px 14px}
+.tg-badge{flex:none;min-width:38px;height:38px;padding:0 6px;border-radius:10px;background:var(--c);color:#fff;font:700 13px/38px system-ui,sans-serif;text-align:center}
+.tg-kind{font-size:11px;font-weight:600;color:#6B7280}
+.tg-title{font-size:14px;font-weight:700;line-height:1.3}
+.tg-title span{color:#9CA3AF;font-weight:400}
+.tg-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:#E5E7EB;border-top:1px solid #E5E7EB;border-bottom:1px solid #E5E7EB}
+.tg-stats div{display:flex;flex-direction:column;gap:2px;padding:8px 10px;background:#F8FAFC}
+.tg-stats b{font-size:12px;font-weight:700}
+.tg-stats span{font-size:10px;color:#6B7280}
+.tg-pass{padding:14px 14px 14px}
+.tg-list{list-style:none;margin:0;padding:0;max-height:190px;overflow-y:auto}
+.tg-stop{position:relative;padding:0 0 11px 20px;font-size:12px;line-height:1.3}
+.tg-stop:last-child{padding-bottom:0}
+.tg-stop::before{content:'';position:absolute;left:4px;top:12px;bottom:-2px;width:2px;background:var(--c);opacity:.35}
+.tg-stop:last-child::before{display:none}
+.tg-stop i{position:absolute;left:0;top:3px;width:10px;height:10px;box-sizing:border-box;border-radius:50%;background:#fff;border:2px solid var(--c)}
+.tg-stop.tg-end i{background:var(--c)}
+.tg-stop b{display:block;font-weight:600}
+.tg-stop small{display:block;color:#6B7280;font-size:11px}
+`
+
+/* ────────────────────────────────────────────────────────────
    Marker peta
    ──────────────────────────────────────────────────────────── */
 const pinIcon = (color, text) =>
@@ -438,13 +486,15 @@ const pinIcon = (color, text) =>
    Halaman peta
    ──────────────────────────────────────────────────────────── */
 function Maps() {
-    const [data, setData] = useState({ biskita: [], kota: [], kabupaten: [] })
+    const [data, setData] = useState({
+        biskita: [],
+        angkot: [],
+    })
     const [status, setStatus] = useState('loading') // loading | ready | error
     const [error, setError] = useState('')
 
     const [tab, setTab] = useState('trayek') // 'petunjuk' | 'trayek'
     const [mode, setMode] = useState('biskita') // 'biskita' | 'angkot'
-    const [area, setArea] = useState('kota') // 'kota' | 'kabupaten'
     const [query, setQuery] = useState('')
     const [selectedId, setSelectedId] = useState(null)
 
@@ -472,14 +522,13 @@ function Maps() {
                 }),
             ),
         )
-            .then(([bis, kota, kab]) => {
+            .then(([bis, angkot]) => {
                 if (off) return
                 const biskita = buildRoutes(bis, 'biskita', { stopFeatures: bis.features.filter((f) => f.geometry?.type === 'Point') })
                 const exclude = new Set(biskita.map((r) => r.ref))
                 setData({
                     biskita,
-                    kota: buildRoutes(kota, 'angkot', { exclude }),
-                    kabupaten: buildRoutes(kab, 'angkot'),
+                    angkot: buildRoutes(angkot, 'angkot', { exclude }),
                 })
                 setStatus('ready')
             })
@@ -491,7 +540,10 @@ function Maps() {
         return () => { off = true }
     }, [])
 
-    const routes = mode === 'biskita' ? data.biskita : area === 'kota' ? data.kota : data.kabupaten
+    // Petunjuk Arah memakai BisKita + angkot sekaligus supaya bisa transit antar moda.
+    // Tab Trayek tetap per moda sesuai pilihan.
+    const allRoutes = useMemo(() => [...data.biskita, ...data.angkot], [data])
+    const routes = tab === 'petunjuk' ? allRoutes : mode === 'biskita' ? data.biskita : data.angkot
     const filtered = useMemo(() => {
         const q = query.trim().toLowerCase()
         if (!q) return routes
@@ -499,7 +551,8 @@ function Maps() {
     }, [routes, query])
 
     const selected = tab === 'trayek' ? routes.find((r) => r.id === selectedId) || null : null
-    const plans = useMemo(() => (asal && tujuan ? planTrips(routes, asal, tujuan) : []), [routes, asal, tujuan])
+    const graph = useMemo(() => buildGraph(allRoutes), [allRoutes])
+    const plans = useMemo(() => (asal && tujuan ? planTrips(graph, asal, tujuan) : []), [graph, asal, tujuan])
     const plan = tab === 'petunjuk' && planIdx != null ? plans[planIdx] || null : null
 
     /* ── Inisialisasi peta (sekali) ── */
@@ -546,15 +599,19 @@ function Maps() {
         if (!m) return
         const g = groups.current.routes
         g.clearLayers()
+        m.closePopup()
         layers.current = {}
         const all = []
         routes.forEach((r) => {
             layers.current[r.id] = r.parts.map((part) => {
                 all.push(...part.pts)
                 return L.polyline(part.pts, { color: r.color, weight: 4, opacity: 0.85, lineCap: 'round', lineJoin: 'round' })
-                    .bindTooltip(`${r.ref} • ${r.from}${r.to ? ' → ' + r.to : ''}`, { sticky: true })
-                    .on('click', () => {
-                        if (live.current.tab === 'trayek') setSelectedId(r.id)
+                    .bindTooltip(tipHtml(r), { sticky: true, direction: 'top', opacity: 1, className: 'tg-tip' })
+                    .on('click', (e) => {
+                        const { tab: t, pick: p } = live.current
+                        if (t === 'trayek') setSelectedId(r.id)
+                        if (t === 'petunjuk' && p) return // sedang memilih titik asal/tujuan
+                        openRoutePopup(m, r, e.latlng)
                     })
                     .addTo(g)
             })
@@ -607,24 +664,27 @@ function Maps() {
         if (tujuan) add(tujuan, '#F97316', 'B', setTujuan)
     }, [asal, tujuan, tab])
 
-    /* ── Gambar rute perjalanan terpilih ── */
+    /* ── Gambar rute perjalanan terpilih (bisa multi-leg / transit) ── */
     useEffect(() => {
         const m = map.current
         const pg = groups.current.plan
         if (!m || !pg) return
         pg.clearLayers()
         if (!plan) return
-        const { part, a, b, route } = plan
-        const ride = part.pts.slice(a.i, b.i + 1)
         const walk = { color: '#1B3A8C', weight: 4, dashArray: '2 9', lineCap: 'round' }
-        L.polyline([asal, part.pts[a.i]], walk).addTo(pg)
-        L.polyline([part.pts[b.i], tujuan], walk).addTo(pg)
-        L.polyline(ride, { color: '#fff', weight: 11, opacity: 0.9 }).addTo(pg)
-        L.polyline(ride, { color: route.color, weight: 7 }).addTo(pg)
-            ;[part.pts[a.i], part.pts[b.i]].forEach((p) =>
-                L.circleMarker(p, { radius: 6, color: route.color, weight: 3, fillColor: '#fff', fillOpacity: 1 }).addTo(pg),
-            )
-        m.fitBounds(L.latLngBounds([asal, tujuan, ...ride]), { padding: [60, 60] })
+        const all = [asal, tujuan]
+        plan.legs.forEach((l) => {
+            L.polyline([l.walk.from, l.walk.to], walk).addTo(pg)
+            const ride = l.part.pts.slice(l.iA, l.iB + 1)
+            all.push(...ride)
+            L.polyline(ride, { color: '#fff', weight: 11, opacity: 0.9 }).addTo(pg)
+            L.polyline(ride, { color: l.route.color, weight: 7 }).addTo(pg)
+                ;[ride[0], ride[ride.length - 1]].forEach((p) =>
+                    L.circleMarker(p, { radius: 6, color: l.route.color, weight: 3, fillColor: '#fff', fillOpacity: 1 }).addTo(pg),
+                )
+        })
+        L.polyline([plan.endWalk.from, plan.endWalk.to], walk).addTo(pg)
+        m.fitBounds(L.latLngBounds(all), { padding: [60, 60] })
     }, [plan, asal, tujuan])
 
     /* ── Aksi ── */
@@ -640,12 +700,7 @@ function Maps() {
         setPlanIdx(null)
         setQuery('')
     }
-    const switchArea = (a) => {
-        setArea(a)
-        setSelectedId(null)
-        setPlanIdx(null)
-        setQuery('')
-    }
+
     const useMyLocation = () => {
         setGeoMsg('')
         if (!navigator.geolocation) return setGeoMsg('Browser kamu tidak mendukung lokasi.')
@@ -663,11 +718,12 @@ function Maps() {
     }
     const fmtPoint = (p) => (p ? `Titik di peta (${p[0].toFixed(4)}, ${p[1].toFixed(4)})` : '')
 
-    const legend = routes.slice(0, 6)
+    const legend = tab === 'petunjuk' ? [...data.biskita.slice(0, 2), ...data.angkot.slice(0, 4)] : routes.slice(0, 6)
 
     /* ── Tampilan ── */
     return (
         <section className="flex flex-col lg:flex-row h-[100dvh] lg:h-[calc(100vh-4rem)] lg:min-h-[640px]">
+            <style>{POPUP_CSS}</style>
             <aside className="w-full lg:w-[420px] shrink-0 bg-[#0A47A9] flex flex-col" style={{ maxHeight: 'clamp(240px, 45dvh, 99999px)' }}>
                 <div className="shrink-0 px-4 pt-4">
                     <div className="flex gap-4 mb-3">
@@ -682,33 +738,27 @@ function Maps() {
                             </button>
                         ))}
                     </div>
-                    <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-none">
-                        {[['biskita', 'Bis Kita', 'bus'], ['angkot', 'Angkot Bogor (01–32)', 'car']].map(([k, l, ic]) => (
-                            <button
-                                key={k}
-                                type="button"
-                                onClick={() => switchMode(k)}
-                                className={`flex items-center gap-1.5 pb-1.5 text-sm border-b-2 transition-colors ${mode === k ? 'text-white font-bold border-[#F97316]' : 'text-blue-200 border-transparent hover:text-white'}`}
-                            >
-                                <Icon name={ic} className={`w-4 h-4 ${mode === k ? 'text-[#F97316]' : ''}`} />{l}
-                            </button>
-                        ))}
-                    </div>
-                    {mode === 'angkot' && (
-                        // SESUDAH
-                        <div className="flex gap-1 mt-3 bg-white/10 rounded-full p-1 w-fit max-w-full overflow-x-auto scrollbar-none">
-                            {[['kota', 'Kota Bogor'], ['kabupaten', 'Kabupaten Bogor']].map(([k, l]) => (
+                    {tab === 'trayek' ? (
+                        <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-none">
+                            {[['biskita', 'Bis Kita', 'bus'], ['angkot', 'Angkot Bogor', 'car']].map(([k, l, ic]) => (
                                 <button
                                     key={k}
                                     type="button"
-                                    onClick={() => switchArea(k)}
-                                    className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${area === k ? 'bg-white text-[#0A47A9]' : 'text-blue-100 hover:text-white'}`}
+                                    onClick={() => switchMode(k)}
+                                    className={`flex items-center gap-1.5 pb-1.5 text-sm border-b-2 transition-colors ${mode === k ? 'text-white font-bold border-[#F97316]' : 'text-blue-200 border-transparent hover:text-white'}`}
                                 >
-                                    {l}
+                                    <Icon name={ic} className={`w-4 h-4 ${mode === k ? 'text-[#F97316]' : ''}`} />{l}
                                 </button>
                             ))}
                         </div>
+                    ) : (
+                        <p className="flex items-center gap-2 pb-1.5 text-xs text-blue-100">
+                            <Icon name="bus" className="w-4 h-4 text-[#F97316]" />
+                            <Icon name="car" className="w-4 h-4 text-[#F97316]" />
+                            Rute menggabungkan Bis Kita dan angkot
+                        </p>
                     )}
+
                 </div>
 
                 <div className="flex-1 overflow-y-auto px-4 pt-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
@@ -780,12 +830,12 @@ function Maps() {
                                         </p>
                                     ) : plans.length === 0 ? (
                                         <p className="px-4 pb-2 text-sm text-blue-100 leading-relaxed">
-                                            Tidak ada {mode === 'biskita' ? 'BisKita' : 'angkot'} langsung antara dua titik ini dalam jarak jalan {MAX_WALK_KM} km. Geser penanda atau coba moda lain.
+                                            Tidak ditemukan rute Bis Kita atau angkot (termasuk transit) dalam jarak jalan {MAX_WALK_KM} km. Geser penanda asal atau tujuan.
                                         </p>
                                     ) : (
                                         plans.map((p, i) => (
                                             <button
-                                                key={p.route.id}
+                                                key={p.sig}
                                                 type="button"
                                                 onClick={() => setPlanIdx(i)}
                                                 className="w-full text-left px-4 py-4 border-t border-white/15 hover:bg-white/5 transition-colors"
@@ -796,7 +846,8 @@ function Maps() {
                                                 </div>
                                                 <div className="my-2.5"><PlanChips plan={p} /></div>
                                                 <p className="text-xs text-blue-100">
-                                                    Berangkat pukul <b className="text-white">{hhmm(p.depart + WAIT_MIN * 60000)}</b> dari jalur {p.route.ref} ({p.route.from}{p.route.to && ' → ' + p.route.to})
+                                                    Naik pukul <b className="text-white">{hhmm(p.depart)}</b> dari jalur {p.legs[0].route.ref} ({p.legs[0].route.from}{p.legs[0].route.to && ' → ' + p.legs[0].route.to})
+                                                    {p.transfers > 0 && <> • lanjut {p.legs.slice(1).map((l) => l.route.ref).join(', ')}</>}
                                                 </p>
                                             </button>
                                         ))
