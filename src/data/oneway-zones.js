@@ -14,4 +14,12 @@
      { name: 'SSA Kebun Raya', bounds: [-6.6050, 106.7900, -6.5930, 106.8060] },
      { name: 'Loop khusus 05',  bounds: [...], refs: ['05'] },
    ──────────────────────────────────────────────────────────── */
-export const ONEWAY_ZONES = []
+export const ONEWAY_ZONES = [
+  {
+    name: 'SSA Kebun Raya (searah jarum jam)',
+    bounds: [-6.6045, 106.7935, -6.5918, 106.8052], // [selatan, barat, utara, timur]
+    center: [-6.5978, 106.7995],
+    clockwise: true,
+    refs: ['01', '05'],
+  },
+]

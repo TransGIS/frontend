@@ -15,7 +15,7 @@ import { ONEWAY_ZONES } from '../data/oneway-zones'
 
 export const SPEED = { biskita: 18, angkot: 15 } // km/jam
 export const WAIT_MIN = 5
-export const MAX_WALK_KM = 1.5
+export const MAX_WALK_KM = 0.8
 export const DETOUR = 1.25 // faktor jalan kaki tidak lurus
 const WALK_KMH = 4.8
 const TRANSFER_KM = 0.35 // jarak maks pindah jalur
@@ -107,14 +107,62 @@ function isOpposite(p, o) {
     return hits[0] > hits[hits.length - 1] // searah p → o berjalan mundur
 }
 
+const JOIN_KM = 0.03 // ujung-awal dua bagian dianggap tersambung bila < 30 m
+
+/* Sambung bagian jalur yang ujung-awalnya bertemu (bukan arah sebaliknya),
+   agar satu rute yang digambar terpotong jadi satu rangkaian utuh. */
+function joinParts(parts) {
+    const rest = parts.slice()
+    const out = []
+    const merge = (a, b) => {
+        const pts = a.pts.concat(b.pts.slice(1))
+        const cum = [0]
+        for (let i = 1; i < pts.length; i++) cum.push(cum[i - 1] + dist(pts[i - 1], pts[i]))
+        return { pts, cum, dir: a.dir || b.dir }
+    }
+    while (rest.length) {
+        let cur = rest.shift()
+        for (; ;) {
+            const tail = cur.pts[cur.pts.length - 1]
+            const head = cur.pts[0]
+            let i = rest.findIndex((o) => dist(tail, o.pts[0]) < JOIN_KM && !isOpposite(cur, o))
+            if (i >= 0) { cur = merge(cur, rest.splice(i, 1)[0]); continue }
+            i = rest.findIndex((o) => dist(o.pts[o.pts.length - 1], head) < JOIN_KM && !isOpposite(o, cur))
+            if (i >= 0) { cur = merge(rest.splice(i, 1)[0], cur); continue }
+            break
+        }
+        out.push(cur)
+    }
+    return out
+}
+
 /* Titik di dalam zona satu arah manual? */
 function inOneWayZone(pos, ref) {
     return ONEWAY_ZONES.some(
         (z) =>
+            !z.center &&
             (!z.refs || z.refs.includes(ref)) &&
             pos[0] >= z.bounds[0] && pos[1] >= z.bounds[1] &&
             pos[0] <= z.bounds[2] && pos[1] <= z.bounds[3],
     )
+}
+
+function wrongWay(a, b, ref) {
+    return ONEWAY_ZONES.some((z) => {
+        if (!z.center || (z.refs && !z.refs.includes(ref))) return false
+        const [s, w, n, e] = z.bounds
+        const inside = (p) => p[0] >= s && p[0] <= n && p[1] >= w && p[1] <= e
+        if (!inside(a) || !inside(b)) return false
+        const k = Math.cos(z.center[0] * RAD)
+        const x = (a[1] - z.center[1]) * k
+        const y = a[0] - z.center[0]
+        const dx = (b[1] - a[1]) * k
+        const dy = b[0] - a[0]
+        const norm = Math.hypot(x, y) * Math.hypot(dx, dy)
+        if (!norm) return false
+        const sin = (x * dy - y * dx) / norm // >0 = berlawanan jarum jam
+        return z.clockwise ? sin > 0.3 : sin < -0.3
+    })
 }
 
 /* Deteksi bagian garis yang MEMUTAR (loop, mis. SSA Kebun Raya).
@@ -168,11 +216,12 @@ function groupPartsByRef(routes) {
 export function buildGraph(routes) {
     const nodes = []
     const adj = []
-    const byRef = groupPartsByRef(routes)
+    const rs = routes.map((r) => ({ ...r, parts: joinParts(r.parts) }))
+    const byRef = groupPartsByRef(rs)
 
     const loops = [] // bagian jalur satu arah yang terdeteksi (untuk diagnosa)
 
-    routes.forEach((route) => {
+    rs.forEach((route) => {
         route.parts.forEach((part, pi) => {
             const key = `${route.id}#${pi}`
             // Angkot 1 garis = bolak-balik. Kalau arah sebaliknya sudah digambar
@@ -235,6 +284,13 @@ export function buildGraph(routes) {
         const k = cellKey(Math.floor(nd.pos[0] / CELL), Math.floor(nd.pos[1] / CELL))
         if (!grid.has(k)) grid.set(k, [])
         grid.get(k).push(id)
+    })
+
+    // Buang edge naik yang salah arah di zona dengan arah putar wajib
+    adj.forEach((edges, u) => {
+        adj[u] = edges.filter(
+            (e) => e.type !== 'ride' || !wrongWay(nodes[u].pos, nodes[e.to].pos, nodes[u].route.ref),
+        )
     })
 
     // Edge transfer: dari tiap node ke node TERDEKAT di tiap jalur lain
