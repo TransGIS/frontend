@@ -4,6 +4,8 @@
 
    Model graf:
    - Node  = titik di sepanjang jalur (di-downsample tiap STEP_KM).
+             Untuk BisKita yang punya data halte, tiap halte juga jadi node
+             dan HANYA node halte yang boleh dipakai naik, turun, dan transit.
    - Edge "ride"  = node → node berikutnya di jalur yang sama.
                     Angkot yang hanya digambar 1 garis dianggap BOLAK-BALIK
                     (edge ride juga dibuat ke arah sebaliknya).
@@ -25,6 +27,7 @@ const OVERLAP_KM = 0.1 // jarak maks dua garis dianggap menimpa jalan yang sama
 const LOOP_TURN_DEG = 270 // total belokan searah yang dianggap "berputar" (loop)
 const LOOP_MIN_KM = 1 // panjang minimum loop
 const LOOP_TRIM_DEG = 10 // belokan lebih kecil dari ini di ujung loop dianggap lurus
+const STOP_SNAP_KM = 0.7 // halte yang lebih jauh dari ini dari jalurnya diabaikan
 const FARE_NUM = { biskita: [4000, 4000], angkot: [5000, 7000] }
 
 // Tiap profil = satu "gaya" pencarian → hasil beragam
@@ -212,6 +215,36 @@ function groupPartsByRef(routes) {
     return m
 }
 
+/* Halte BisKita → { indeks titik di jalur: nama halte } untuk tiap bagian jalur.
+   Halte yang punya arah (dir 0 = pergi, 1 = pulang) hanya dicari di separuh jalur
+   yang sesuai, karena jalur pulang-pergi menumpuk di jalan yang sama. */
+function snapStops(route) {
+    if (route.kind !== 'biskita' || !route.allStops?.length) return null
+    const maps = route.parts.map(() => new Map())
+    const turns = route.parts.map((part) => {
+        let turn = part.pts.length - 1
+        let far = 0
+        part.pts.forEach((p, i) => {
+            const d = dist(part.pts[0], p)
+            if (d > far) { far = d; turn = i }
+        })
+        return turn
+    })
+    route.allStops.forEach((s) => {
+        let best = { pi: -1, i: -1, d: Infinity }
+        route.parts.forEach((part, pi) => {
+            const lo = s.dir > 0 ? turns[pi] : 0
+            const hi = s.dir === 0 ? turns[pi] : part.pts.length - 1
+            for (let i = lo; i <= hi; i++) {
+                const d = dist(part.pts[i], s.pos)
+                if (d < best.d) best = { pi, i, d }
+            }
+        })
+        if (best.pi >= 0 && best.d <= STOP_SNAP_KM) maps[best.pi].set(best.i, s.name)
+    })
+    return maps
+}
+
 /* ── Bangun graf dari daftar rute (dipanggil sekali per set rute) ── */
 export function buildGraph(routes) {
     const nodes = []
@@ -222,6 +255,8 @@ export function buildGraph(routes) {
     const loops = [] // bagian jalur satu arah yang terdeteksi (untuk diagnosa)
 
     rs.forEach((route) => {
+        const stopMaps = snapStops(route)
+        const onlyStops = !!stopMaps && stopMaps.some((m) => m.size > 0)
         route.parts.forEach((part, pi) => {
             const key = `${route.id}#${pi}`
             // Angkot 1 garis = bolak-balik. Kalau arah sebaliknya sudah digambar
@@ -237,9 +272,15 @@ export function buildGraph(routes) {
             let lastCum = 0
             for (let i = 0; i < n; i++) {
                 const isLast = i === n - 1
-                if (prev !== -1 && !isLast && part.cum[i] - lastCum < STEP_KM) continue
+                const stopName = stopMaps?.[pi]?.get(i)
+                const isStop = stopName !== undefined
+                if (prev !== -1 && !isLast && !isStop && part.cum[i] - lastCum < STEP_KM) continue
                 const id = nodes.length
-                nodes.push({ pos: part.pts[i], route, part, key, i })
+                nodes.push({
+                    pos: part.pts[i], route, part, key, i,
+                    stop: isStop ? stopName : null,
+                    canBoard: !onlyStops || isStop,
+                })
                 adj.push([])
                 let w = 0
                 if (prev !== -1) {
@@ -295,6 +336,7 @@ export function buildGraph(routes) {
 
     // Edge transfer: dari tiap node ke node TERDEKAT di tiap jalur lain
     nodes.forEach((nd, id) => {
+        if (!nd.canBoard) return // transit hanya dari halte
         const cx = Math.floor(nd.pos[0] / CELL)
         const cy = Math.floor(nd.pos[1] / CELL)
         const best = new Map()
@@ -305,6 +347,7 @@ export function buildGraph(routes) {
                 for (const c of cell) {
                     const o = nodes[c]
                     if (o.key === nd.key) continue
+                    if (!o.canBoard) continue // transit hanya ke halte
                     // Jangan pindah antar arah pada nomor rute yang sama (A→B lalu
                     // "pindah" ke arah sebaliknya = bolak-balik tanpa guna).
                     if (o.route.ref === nd.route.ref && o.route.kind === nd.route.kind) continue
@@ -321,16 +364,21 @@ export function buildGraph(routes) {
     return { nodes, adj, loops }
 }
 
-/* ── Node terdekat per jalur dalam jarak jalan maksimum ── */
+/* ── Kandidat naik/turun dalam jarak jalan maksimum.
+   Angkot / BisKita tanpa halte: node terdekat per jalur.
+   BisKita berhalte: semua halte dalam jangkauan (arah pergi & pulang sama-sama bisa dipilih). ── */
 function nearestPerPart(g, P) {
     const m = new Map()
+    const stops = []
     g.nodes.forEach((nd, id) => {
+        if (!nd.canBoard) return
         const d = dist(nd.pos, P)
         if (d > MAX_WALK_KM) return
+        if (nd.stop) { stops.push({ id, d }); return }
         const c = m.get(nd.key)
         if (!c || d < c.d) m.set(nd.key, { id, d })
     })
-    return [...m.values()]
+    return [...m.values(), ...stops]
 }
 
 /* ── Dijkstra ── */
@@ -390,6 +438,8 @@ function toPlan(g, path, A, B, t0) {
     for (const l of legs) {
         l.iA = l.from.i
         l.iB = l.to.i
+        l.boardStop = l.from.stop
+        l.alightStop = l.to.stop
         // Angkot bisa dinaiki ke arah sebaliknya dari urutan titik di GeoJSON
         l.reversed = l.iB < l.iA
         l.km = Math.abs(l.part.cum[l.iB] - l.part.cum[l.iA])

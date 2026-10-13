@@ -1,20 +1,18 @@
 /* ────────────────────────────────────────────────────────────
    Pemuat & pengurai data rute (GeoJSON di public/rute/).
-   Dipakai bersama oleh section "Info Tarif & Rute" di HomePage.
-   Logikanya sama dengan yang ada di Maps.jsx — lihat catatan di
-   bawah bila ingin Maps.jsx ikut memakai file ini.
+   Dipakai oleh Maps.jsx dan section "Info Tarif & Rute" di HomePage.
    ──────────────────────────────────────────────────────────── */
 import { dist, SPEED } from './routing'
 
 const BASE = import.meta.env.BASE_URL
 const FILES = {
-    biskita: `${BASE}rute/biskita-bogor.geojson`,
+    biskita: `${BASE}rute/biskita-bogor-K1K2K5.geojson`,
     angkot: `${BASE}rute/angkot-kota-kabupaten-bogor.geojson`,
 }
 
 const FARE = { biskita: 'Rp 4.000', angkot: 'Rp 5.000-7.000' }
 const PALETTE = ['#16A34A', '#2563EB', '#F97316', '#9333EA', '#0D9488', '#DB2777', '#CA8A04', '#0891B2', '#65A30D', '#7C3AED']
-const OVERRIDES = { K1: { color: '#DC2626' } }
+const OVERRIDES = { K1: { color: '#DC2626' }, K2F: { color: '#A559A4' } }
 
 function makePart(pts, dir) {
     const cum = [0]
@@ -33,6 +31,8 @@ function nearest(part, p) {
 }
 
 function refFromName(name, fid) {
+    const pre = name.match(/^([A-Z]+\d+[A-Z]?)\s*:/) // "K2F: ..." → "K2F"
+    if (pre) return pre[1]
     const t = name.match(/^Trayek\s+(\d+\w*)/i)
     if (t) return t[1]
     const k = name.match(/Kor\s*(\d+)/i)
@@ -43,7 +43,7 @@ function refFromName(name, fid) {
 
 function splitTitle(name, p) {
     if (p.from && p.to) return [p.from, p.to]
-    let s = name.replace(/\s*\(via[^)]*\)/i, '')
+    let s = name.replace(/^[A-Z]+\d+[A-Z]?\s*:\s*/, '').replace(/\s*\(via[^)]*\)/i, '').replace(/\s+PP$/i, '')
     const m = s.match(/\((.+)\)/)
     if (m && /[-–—]/.test(m[1])) s = m[1]
     const t = s.split(/\s*[–—]\s*|\s+-\s+|-(?=[A-Z])/).map((x) => x.trim()).filter(Boolean)
@@ -69,7 +69,13 @@ export function buildRoutes(fc, kind, { exclude = new Set(), stopFeatures = [] }
         const parts = lines
             .map((l) => makePart(l.map((c) => [c[1], c[0]]), p.to))
             .filter((x) => x.pts.length > 1)
-        if (!groups.has(key)) groups.set(key, { id: key, kind, ref, from, to, via: p.via || null, name, parts: [] })
+        if (!groups.has(key)) {
+            groups.set(key, {
+                id: key, kind, ref, from, to, via: p.via || null, name,
+                srcColor: p.color || p.stroke || null, // dipakai mencocokkan halte tanpa "ref"
+                parts: [],
+            })
+        }
         groups.get(key).parts.push(...parts)
     }
 
@@ -90,10 +96,24 @@ export function buildRoutes(fc, kind, { exclude = new Set(), stopFeatures = [] }
 }
 
 function attachStops(route, stopFeatures) {
+    // urutan arah = urutan kemunculan pertama di file (Bubulak → Ciawi dulu, lalu sebaliknya)
+    const dirs = []
     const mine = stopFeatures.flatMap((s) => {
-        const rel = s.properties?.['@relations']?.find((x) => x.role === 'stop' && String(x.reltags?.ref) === route.ref)
-        return rel ? [{ s, seq: rel.seq }] : []
+        const p = s.properties || {}
+        // format OSM (K1): titik ber-role "stop" di @relations
+        const rel = p['@relations']?.find((x) => x.role === 'stop' && String(x.reltags?.ref) === route.ref)
+        if (rel) return [{ s, seq: rel.seq }]
+        // format manual (K2F): type "halte" + direction + sequence
+        if (p.type !== 'halte') return []
+        const match = p.ref != null
+            ? String(p.ref) === route.ref
+            : !!p['marker-color'] && p['marker-color'] === route.srcColor
+        if (!match) return []
+        let di = dirs.indexOf(p.direction)
+        if (di < 0) di = dirs.push(p.direction) - 1
+        return [{ s, seq: di * 1000 + Number(p.sequence) }]
     })
+
     const placed = mine.map(({ s, seq }) => {
         const pos = [s.geometry.coordinates[1], s.geometry.coordinates[0]]
         let best = { pi: 0, i: 0, d: Infinity }
