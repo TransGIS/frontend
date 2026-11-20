@@ -9,17 +9,13 @@
 }
 .scrollbar-none::-webkit-scrollbar { display: none; }
 
-/* reset max-height di breakpoint lg */
-@media (min-width: 1024px) {
-  aside { max-height: none !important; }
-}
-
-/* Landing TransGIS: tipografi pixel dan bahasa visual jalan */
+/* Landing dan peta TransGIS: tipografi pixel serta bahasa visual jalan */
 .font-pixel {
   font-family: 'Pixelify Sans', monospace;
 }
 
 .landing-page,
+.maps-page,
 .site-footer {
   font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
 }

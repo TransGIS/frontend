@@ -36,7 +36,7 @@ function Navbar() {
             ? 'border-[#12233F]/10 bg-white shadow-[0_2px_0_rgba(18,35,63,0.08)]'
             : 'border-transparent bg-transparent'
             }`}>
-            <div className={`max-w-6xl mx-auto flex ${isHome ? 'h-20' : 'h-16'} items-center justify-between px-4 sm:px-6`}>
+            <div className="max-w-6xl mx-auto flex h-20 items-center justify-between px-4 sm:px-6">
                 <a href="/" className="flex items-center gap-3" aria-label="TransGIS, kembali ke beranda">
                     <span className={`grid h-9 w-9 place-items-center border-2 bg-[#1B3A8C] ${solid
                         ? 'border-[#12233F] shadow-[3px_3px_0_#12233F]'

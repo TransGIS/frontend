@@ -36,6 +36,7 @@ const ICONS = {
     car: <path d="M5 16l1.5-5a2 2 0 012-1.5h7a2 2 0 012 1.5L19 16M4 16h16v3H4zM7 19v1M17 19v1" />,
     walk: <><circle cx="13" cy="4" r="1.5" /><path d="M12 8l-3 3 1 3 2-1M12 8l3 3 2 1M10 14l-2 6M12 13l2 3v4" /></>,
     locate: <><circle cx="12" cy="12" r="3" /><circle cx="12" cy="12" r="7" /><path d="M12 2v3M12 19v3M2 12h3M19 12h3" /></>,
+    close: <path d="M6 6l12 12M18 6L6 18" />,
 }
 function Icon({ name, className = 'w-4 h-4' }) {
     return (
@@ -48,14 +49,17 @@ function Icon({ name, className = 'w-4 h-4' }) {
 /* ────────────────────────────────────────────────────────────
    Komponen kecil sidebar
    ──────────────────────────────────────────────────────────── */
-const SectionLabel = ({ children }) => (
-    <p className="text-[11px] font-bold uppercase tracking-wider text-blue-200 mb-2">{children}</p>
-)
+const SectionLabel = ({ children, htmlFor }) => {
+    const className = 'mb-2 block text-xs font-extrabold text-[#12233F]'
+    return htmlFor
+        ? <label htmlFor={htmlFor} className={className}>{children}</label>
+        : <p className={className}>{children}</p>
+}
 
 function Badge({ route }) {
     return (
         <span
-            className="shrink-0 min-w-9 h-9 px-1.5 rounded-lg flex items-center justify-center text-white text-xs font-bold"
+            className="flex h-10 min-w-10 shrink-0 items-center justify-center border-2 border-[#12233F] px-1.5 text-xs font-extrabold text-white"
             style={{ background: route.color }}
         >
             {route.ref}
@@ -68,23 +72,23 @@ function RouteCard({ route, onClick }) {
         <button
             type="button"
             onClick={onClick}
-            className="w-full text-left bg-white rounded-xl p-3.5 shadow-sm hover:shadow-md transition-shadow"
+            className="group w-full border-2 border-[#12233F] bg-white p-4 text-left shadow-[3px_3px_0_#12233F] transition-[transform,box-shadow] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0_#12233F] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]"
         >
             <div className="flex items-start gap-3">
                 <Badge route={route} />
-                <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-gray-900 leading-snug">
+                <div className="min-w-0 flex-1">
+                    <p className="text-sm font-extrabold leading-snug text-[#12233F] group-hover:text-[#1B3A8C]">
                         {route.from}
-                        {route.to && <span className="text-gray-400 font-normal"> → </span>}
+                        {route.to && <span className="font-normal text-gray-400"> → </span>}
                         {route.to}
                     </p>
-                    {route.via && <p className="text-xs text-gray-500 mt-0.5">Via {route.via}</p>}
+                    {route.via && <p className="mt-1 text-xs leading-relaxed text-gray-500">Via {route.via}</p>}
                 </div>
-                <span className="shrink-0 bg-gray-100 text-gray-700 text-[11px] font-bold rounded px-2 py-1">{route.fare}</span>
+                <span className="shrink-0 border border-[#12233F]/20 bg-[#F7F4EA] px-2 py-1 text-[11px] font-extrabold text-[#12233F]">{route.fare}</span>
             </div>
-            <div className="mt-3 pt-2.5 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
-                <span className="flex items-center gap-1.5"><Icon name="clock" className="w-3.5 h-3.5" />Estimasi Perjalanan: ~{route.minutes} mnt</span>
-                {route.kind === 'biskita' && <span>Tarif Flat</span>}
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t-2 border-[#12233F]/10 pt-2.5 text-xs text-gray-500">
+                <span className="flex items-center gap-1.5"><Icon name="clock" className="h-3.5 w-3.5 text-[#1B3A8C]" />Estimasi ~{route.minutes} mnt</span>
+                {route.kind === 'biskita' && <span className="font-semibold text-[#1B3A8C]">Tarif flat</span>}
             </div>
         </button>
     )
@@ -92,8 +96,8 @@ function RouteCard({ route, onClick }) {
 
 function BackButton({ onClick }) {
     return (
-        <button type="button" onClick={onClick} className="flex items-center gap-2 text-white text-sm font-semibold mb-4 hover:text-orange-300 transition-colors">
-            <Icon name="back" className="w-5 h-5" /> Kembali
+        <button type="button" onClick={onClick} className="mb-4 flex items-center gap-2 text-sm font-extrabold text-[#1B3A8C] transition-colors hover:text-[#F97316] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]">
+            <Icon name="back" className="h-5 w-5" /> Kembali
         </button>
     )
 }
@@ -101,25 +105,25 @@ function BackButton({ onClick }) {
 function Timeline({ items }) {
     return (
         <ol className="relative pl-7">
-            <span className="absolute left-[9px] top-4 bottom-4 w-0.5 bg-gradient-to-b from-[#F97316] to-[#16A34A]" />
+            <span className="absolute bottom-4 left-[9px] top-4 w-0.5 bg-[#94A3B8]" />
             {items.map((s, i) => {
                 const first = i === 0
                 const last = i === items.length - 1
                 return (
                     <li key={`${s.name}-${i}`} className="relative mb-3 last:mb-0">
                         <span
-                            className={`absolute -left-7 top-4 w-5 h-5 rounded-full border-[3px] ${first ? 'bg-[#F97316] border-white' : last ? 'bg-[#16A34A] border-white' : 'bg-[#0A47A9] border-[#F97316]'}`}
+                            className={`absolute -left-7 top-4 h-5 w-5 rounded-full border-[3px] ${first ? 'border-white bg-[#F97316]' : last ? 'border-white bg-[#16A34A]' : 'border-[#F97316] bg-[#1B3A8C]'}`}
                         />
-                        <div className="rounded-xl border-2 border-white/90 px-3.5 py-2.5">
-                            <div className="flex items-center justify-between gap-2">
-                                <p className="text-sm font-semibold text-white">{s.name}</p>
+                        <div className="border-2 border-[#12233F]/15 bg-white px-3.5 py-3">
+                            <div className="flex items-start justify-between gap-2">
+                                <p className="text-sm font-bold text-[#12233F]">{s.name}</p>
                                 {(first || last || s.tag) && (
-                                    <span className={`shrink-0 text-[10px] font-bold text-white rounded-full px-2 py-0.5 ${first ? 'bg-[#F97316]' : last ? 'bg-[#16A34A]' : 'bg-white/20'}`}>
-                                        {first ? 'Titik Awal' : last ? 'Tujuan Akhir' : s.tag}
+                                    <span className={`shrink-0 px-2 py-0.5 text-[10px] font-extrabold text-white ${first ? 'bg-[#F97316]' : last ? 'bg-[#16A34A]' : 'bg-[#1B3A8C]'}`}>
+                                        {first ? 'Titik awal' : last ? 'Tujuan akhir' : s.tag}
                                     </span>
                                 )}
                             </div>
-                            {s.sub && <p className="text-xs text-blue-200 mt-0.5">{s.sub}</p>}
+                            {s.sub && <p className="mt-1 text-xs leading-relaxed text-gray-500">{s.sub}</p>}
                         </div>
                     </li>
                 )
@@ -143,24 +147,24 @@ function RouteDetail({ route, onBack }) {
     return (
         <>
             <BackButton onClick={onBack} />
-            <div className="bg-[#16A34A] rounded-xl p-3.5 mb-5 text-white shadow-md">
+            <div className="mb-5 border-2 border-t-4 bg-white p-4 text-[#12233F] shadow-[4px_4px_0_#12233F]" style={{ borderColor: '#12233F', borderTopColor: route.color }}>
                 <div className="flex items-start gap-3">
                     <Badge route={route} />
-                    <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold leading-snug">{route.from}{route.to && ' → '}{route.to}</p>
-                        {route.via && <p className="text-xs text-green-100 mt-0.5">Via {route.via}</p>}
+                    <div className="min-w-0 flex-1">
+                        <p className="text-sm font-extrabold leading-snug">{route.from}{route.to && ' → '}{route.to}</p>
+                        {route.via && <p className="mt-1 text-xs text-gray-500">Via {route.via}</p>}
                     </div>
-                    <span className="shrink-0 bg-green-900/50 text-[11px] font-bold rounded px-2 py-1">{route.fare}</span>
+                    <span className="shrink-0 border border-[#12233F]/20 bg-[#F7F4EA] px-2 py-1 text-[11px] font-extrabold">{route.fare}</span>
                 </div>
-                <div className="mt-3 pt-2.5 border-t border-white/25 flex items-center justify-between text-xs text-green-50">
-                    <span className="flex items-center gap-1.5"><Icon name="clock" className="w-3.5 h-3.5" />Estimasi Perjalanan: ~{route.minutes} mnt • {fmtKm(route.km)}</span>
-                    {route.kind === 'biskita' && <span>Tarif Flat</span>}
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t-2 border-[#12233F]/10 pt-2.5 text-xs text-gray-500">
+                    <span className="flex items-center gap-1.5"><Icon name="clock" className="h-3.5 w-3.5 text-[#1B3A8C]" />~{route.minutes} mnt • {fmtKm(route.km)}</span>
+                    {route.kind === 'biskita' && <span className="font-semibold text-[#1B3A8C]">Tarif flat</span>}
                 </div>
             </div>
             <SectionLabel>Daftar halte &amp; kedatangan</SectionLabel>
             <Timeline items={items} />
             {!route.stops.length && (
-                <p className="text-xs text-blue-200 mt-4 leading-relaxed">
+                <p className="mt-4 border-l-4 border-[#F97316] bg-white px-3 py-2 text-xs leading-relaxed text-gray-600">
                     Data halte untuk trayek angkot belum ada di database, jadi hanya titik awal dan akhir yang ditampilkan.
                 </p>
             )}
@@ -170,17 +174,17 @@ function RouteDetail({ route, onBack }) {
 
 function PlanChips({ plan }) {
     const walk = (m, key) => (
-        <span key={key} className="inline-flex items-center gap-1 bg-white text-gray-800 text-xs font-semibold rounded px-2 py-1">
-            <Icon name="walk" className="w-3.5 h-3.5" />{Math.max(1, Math.round(m))}&apos;
+        <span key={key} className="inline-flex items-center gap-1 border border-[#12233F]/20 bg-[#F7F4EA] px-2 py-1 text-xs font-bold text-[#12233F]">
+            <Icon name="walk" className="h-3.5 w-3.5 text-[#1B3A8C]" />{Math.max(1, Math.round(m))}&apos;
         </span>
     )
-    const sep = (key) => <span key={key} className="text-blue-300">›</span>
+    const sep = (key) => <span key={key} className="font-bold text-[#F97316]">›</span>
     const out = []
     plan.legs.forEach((l, i) => {
         if (i === 0 || l.walk.min >= 1) out.push(walk(l.walk.min, `w${i}`), sep(`a${i}`))
         out.push(
-            <span key={`c${i}`} className="inline-flex items-center gap-1 text-white text-xs font-bold rounded px-2 py-1" style={{ background: CHIP_COLOR[l.route.kind] }}>
-                <Icon name={l.route.kind === 'biskita' ? 'bus' : 'car'} className="w-3.5 h-3.5" />{l.route.ref} {l.route.kind === 'biskita' ? 'Bis Kita' : 'Angkot'}
+            <span key={`c${i}`} className="inline-flex items-center gap-1 border border-[#12233F] px-2 py-1 text-xs font-extrabold text-white" style={{ background: CHIP_COLOR[l.route.kind] }}>
+                <Icon name={l.route.kind === 'biskita' ? 'bus' : 'car'} className="h-3.5 w-3.5" />{l.route.ref} {l.route.kind === 'biskita' ? 'BisKita' : 'Angkot'}
             </span>,
             sep(`b${i}`),
         )
@@ -191,11 +195,11 @@ function PlanChips({ plan }) {
 
 function PlanSummary({ plan }) {
     return (
-        <div className="flex items-baseline gap-2 flex-wrap">
-            <span className="text-3xl font-bold text-white">{Math.round(plan.total)}</span>
-            <span className="text-lg text-white">mnt</span>
-            <span className="text-xs text-blue-200">
-                • Tiba pukul {hhmm(plan.arrive)} • {plan.transfers ? `${plan.transfers}x transit` : 'Langsung'}
+        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+            <span className="font-pixel text-4xl font-semibold leading-none text-[#1B3A8C]">{Math.round(plan.total)}</span>
+            <span className="text-sm font-extrabold text-[#12233F]">mnt</span>
+            <span className="text-xs text-gray-500">
+                • Tiba {hhmm(plan.arrive)} • {plan.transfers ? `${plan.transfers}x transit` : 'Langsung'}
             </span>
         </div>
     )
@@ -207,7 +211,7 @@ function PlanDetail({ plan, onBack }) {
         const r = l.route
         const isBus = r.kind === 'biskita'
         steps.push({
-            icon: 'walk', bg: 'bg-white text-gray-800', label: i === 0 ? 'Jalan kaki' : 'Transit',
+            icon: 'walk', bg: 'bg-[#F7F4EA] text-[#1B3A8C]', label: i === 0 ? 'Jalan kaki' : 'Transit',
             title: l.boardStop ? `Jalan ke halte ${l.boardStop}` : i === 0 ? `Jalan ke jalur ${r.ref}` : `Pindah ke jalur ${r.ref}`,
             sub: `Jarak ~${fmtKm(l.walk.km)} • Tiba sebelum ${hhmm(l.boardAt)}`,
             time: `${Math.max(1, Math.round(l.walk.min))} mnt`,
@@ -221,7 +225,7 @@ function PlanDetail({ plan, onBack }) {
     })
     const lastStop = plan.legs[plan.legs.length - 1].alightStop
     steps.push({
-        icon: 'walk', bg: 'bg-white text-gray-800', label: 'Jalan kaki',
+        icon: 'walk', bg: 'bg-[#F7F4EA] text-[#1B3A8C]', label: 'Jalan kaki',
         title: lastStop ? `Turun di halte ${lastStop}, lalu jalan ke tujuan` : 'Turun, lalu jalan ke tujuan',
         sub: `Jarak ~${fmtKm(plan.endWalk.km)}`,
         time: `Tiba ${hhmm(plan.arrive)}`,
@@ -229,26 +233,28 @@ function PlanDetail({ plan, onBack }) {
     return (
         <>
             <BackButton onClick={onBack} />
-            <PlanSummary plan={plan} />
-            <div className="mt-3 mb-2"><PlanChips plan={plan} /></div>
-            <p className="text-xs text-blue-200 mb-5">Total tarif ~{fmtFare(plan.fare)}</p>
-            <ol className="relative">
-                <span className="absolute left-[15px] top-6 bottom-6 w-0.5 bg-white/30" />
+            <div className="border-2 border-[#12233F] bg-white p-4 shadow-[4px_4px_0_#12233F]">
+                <PlanSummary plan={plan} />
+                <div className="mb-3 mt-4"><PlanChips plan={plan} /></div>
+                <p className="border-t-2 border-[#12233F]/10 pt-3 text-xs font-semibold text-gray-600">Total tarif <span className="font-extrabold text-[#12233F]">~{fmtFare(plan.fare)}</span></p>
+            </div>
+            <ol className="relative mt-6">
+                <span className="absolute bottom-6 left-[15px] top-6 w-0.5 bg-[#94A3B8]" />
                 {steps.map((s, i) => (
                     <li key={i} className="relative flex gap-3 pb-6 last:pb-0">
-                        <span className={`relative shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${s.bg}`} style={s.color ? { background: s.color } : undefined}>
-                            <Icon name={s.icon} className="w-4 h-4" />
+                        <span className={`relative flex h-8 w-8 shrink-0 items-center justify-center border-2 border-[#12233F] ${s.bg}`} style={s.color ? { background: s.color } : undefined}>
+                            <Icon name={s.icon} className="h-4 w-4" />
                         </span>
-                        <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between gap-2">
-                                <p className="text-[11px] font-bold uppercase tracking-wide text-blue-200">Langkah {i + 1} • {s.label}</p>
-                                <span className="shrink-0 bg-white/90 text-gray-800 text-[11px] font-semibold rounded px-2 py-0.5">{s.time}</span>
+                        <div className="min-w-0 flex-1 border-b-2 border-[#12233F]/10 pb-5">
+                            <div className="flex items-start justify-between gap-2">
+                                <p className="text-[11px] font-extrabold text-gray-500">Langkah {i + 1} • {s.label}</p>
+                                <span className="shrink-0 border border-[#12233F]/20 bg-white px-2 py-0.5 text-[11px] font-bold text-[#12233F]">{s.time}</span>
                             </div>
-                            <p className="text-sm font-semibold text-white mt-1">
-                                {s.chip && <span className="inline-block text-[11px] font-bold rounded px-1.5 py-0.5 mr-1.5" style={{ background: s.color }}>{s.chip}</span>}
+                            <p className="mt-1.5 text-sm font-bold leading-relaxed text-[#12233F]">
+                                {s.chip && <span className="mr-1.5 inline-block border border-[#12233F] px-1.5 py-0.5 text-[11px] font-extrabold text-white" style={{ background: s.color }}>{s.chip}</span>}
                                 {s.title}
                             </p>
-                            <p className="text-xs text-blue-200 mt-0.5">{s.sub}</p>
+                            <p className="mt-1 text-xs leading-relaxed text-gray-500">{s.sub}</p>
                         </div>
                     </li>
                 ))}
@@ -302,35 +308,43 @@ function openRoutePopup(m, r, latlng) {
 }
 
 const POPUP_CSS = `
-.tg-tip.leaflet-tooltip{display:flex;align-items:center;gap:8px;padding:6px 10px;border:0;border-radius:10px;background:#fff;color:#111827;font-size:12px;box-shadow:0 6px 18px rgba(10,30,80,.22)}
+.maps-page{font-family:'Plus Jakarta Sans',ui-sans-serif,system-ui,sans-serif}
+.maps-page .leaflet-control-zoom{border:2px solid #12233F;border-radius:0;box-shadow:3px 3px 0 #12233F}
+.maps-page .leaflet-control-zoom a{border-radius:0;color:#12233F;border-bottom:2px solid #12233F;font-family:'Plus Jakarta Sans',sans-serif}
+.maps-page .leaflet-control-zoom a:last-child{border-bottom:0}
+.maps-page .leaflet-control-zoom a:hover{background:#EAF0FF;color:#1B3A8C}
+.maps-page .leaflet-control-attribution{background:rgba(247,244,234,.9);color:#4B5563;font-size:9px}
+.tg-tip.leaflet-tooltip{display:flex;align-items:center;gap:8px;padding:7px 10px;border:2px solid #12233F;border-radius:0;background:#F7F4EA;color:#12233F;font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;box-shadow:3px 3px 0 #12233F}
 .tg-tip.leaflet-tooltip::before{display:none}
-.tg-tip .tg-dot{width:10px;height:10px;border-radius:50%;flex:none}
-.tg-tip b{font-weight:700}
-.tg-popup .leaflet-popup-content-wrapper{padding:0;border-radius:16px;overflow:hidden;box-shadow:0 14px 36px rgba(10,30,80,.3)}
-.tg-popup .leaflet-popup-content{margin:0;width:280px!important;font-family:inherit}
-.tg-popup .leaflet-popup-tip{box-shadow:0 6px 12px rgba(10,30,80,.15)}
-.tg-popup a.leaflet-popup-close-button{top:12px;right:10px;width:24px;height:24px;padding:0;font-size:20px;line-height:22px;text-align:center;color:#6B7280}
-.tg-card{color:#111827}
-.tg-bar{height:5px;background:var(--c)}
-.tg-head{display:flex;gap:10px;align-items:flex-start;padding:12px 38px 12px 14px}
-.tg-badge{flex:none;min-width:38px;height:38px;padding:0 6px;border-radius:10px;background:var(--c);color:#fff;font:700 13px/38px system-ui,sans-serif;text-align:center}
-.tg-kind{font-size:11px;font-weight:600;color:#6B7280}
-.tg-title{font-size:14px;font-weight:700;line-height:1.3}
-.tg-title span{color:#9CA3AF;font-weight:400}
-.tg-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:#E5E7EB;border-top:1px solid #E5E7EB;border-bottom:1px solid #E5E7EB}
-.tg-stats div{display:flex;flex-direction:column;gap:2px;padding:8px 10px;background:#F8FAFC}
-.tg-stats b{font-size:12px;font-weight:700}
+.tg-tip .tg-dot{width:10px;height:10px;flex:none}
+.tg-tip b{font-weight:800}
+.tg-popup .leaflet-popup-content-wrapper{padding:0;border:2px solid #12233F;border-radius:0;overflow:hidden;box-shadow:5px 5px 0 #12233F}
+.tg-popup .leaflet-popup-content{margin:0;width:280px!important;font-family:'Plus Jakarta Sans',sans-serif}
+.tg-popup .leaflet-popup-tip{border:2px solid #12233F;box-shadow:none}
+.tg-popup a.leaflet-popup-close-button{top:10px;right:9px;width:26px;height:26px;padding:0;border:2px solid transparent;font-size:21px;line-height:20px;text-align:center;color:#12233F}
+.tg-popup a.leaflet-popup-close-button:hover{border-color:#12233F;background:#fff;color:#F97316}
+.tg-card{color:#12233F;background:#F7F4EA}
+.tg-bar{height:6px;background:var(--c);border-bottom:2px solid #12233F}
+.tg-head{display:flex;gap:10px;align-items:flex-start;padding:13px 38px 13px 14px}
+.tg-badge{flex:none;min-width:40px;height:40px;padding:0 6px;border:2px solid #12233F;background:var(--c);color:#fff;font:800 13px/36px 'Plus Jakarta Sans',sans-serif;text-align:center}
+.tg-kind{font-size:11px;font-weight:700;color:#6B7280}
+.tg-title{font-size:14px;font-weight:800;line-height:1.35}
+.tg-title span{color:#F97316;font-weight:700}
+.tg-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;background:#12233F;border-top:2px solid #12233F;border-bottom:2px solid #12233F}
+.tg-stats div{display:flex;flex-direction:column;gap:2px;padding:9px 10px;background:#fff}
+.tg-stats b{font-size:12px;font-weight:800}
 .tg-stats span{font-size:10px;color:#6B7280}
-.tg-pass{padding:14px 14px 14px}
+.tg-pass{padding:14px}
 .tg-list{list-style:none;margin:0;padding:0;max-height:190px;overflow-y:auto}
-.tg-stop{position:relative;padding:0 0 11px 20px;font-size:12px;line-height:1.3}
+.tg-stop{position:relative;padding:0 0 12px 20px;font-size:12px;line-height:1.35}
 .tg-stop:last-child{padding-bottom:0}
-.tg-stop::before{content:'';position:absolute;left:4px;top:12px;bottom:-2px;width:2px;background:var(--c);opacity:.35}
+.tg-stop::before{content:'';position:absolute;left:4px;top:12px;bottom:-2px;width:2px;background:var(--c);opacity:.4}
 .tg-stop:last-child::before{display:none}
-.tg-stop i{position:absolute;left:0;top:3px;width:10px;height:10px;box-sizing:border-box;border-radius:50%;background:#fff;border:2px solid var(--c)}
+.tg-stop i{position:absolute;left:0;top:3px;width:10px;height:10px;box-sizing:border-box;background:#fff;border:2px solid var(--c)}
 .tg-stop.tg-end i{background:var(--c)}
-.tg-stop b{display:block;font-weight:600}
+.tg-stop b{display:block;font-weight:700}
 .tg-stop small{display:block;color:#6B7280;font-size:11px}
+@media(prefers-reduced-motion:reduce){.maps-page *{scroll-behavior:auto!important;transition-duration:.01ms!important}}
 `
 
 /* ────────────────────────────────────────────────────────────
@@ -362,6 +376,8 @@ function Maps() {
     const [mode, setMode] = useState('biskita') // 'biskita' | 'angkot'
     const [query, setQuery] = useState('')
     const [selectedId, setSelectedId] = useState(null)
+    const [panelOpen, setPanelOpen] = useState(true)
+    const [legendOpen, setLegendOpen] = useState(false)
 
     const [asal, setAsal] = useState(init?.asal ?? null)
     const [tujuan, setTujuan] = useState(init?.tujuan ?? null)
@@ -425,6 +441,17 @@ function Maps() {
             .catch((e) => { if (!off) { setError(e.message); setStatus('error') } })
         return () => { off = true }
     }, [])
+
+    // Escape menutup dialog teratas lebih dulu, baru sidebar overlay.
+    useEffect(() => {
+        const onKeyDown = (e) => {
+            if (e.key !== 'Escape') return
+            if (legendOpen) setLegendOpen(false)
+            else setPanelOpen(false)
+        }
+        window.addEventListener('keydown', onKeyDown)
+        return () => window.removeEventListener('keydown', onKeyDown)
+    }, [legendOpen])
 
     // Petunjuk Arah memakai BisKita + angkot sekaligus supaya bisa transit antar moda.
     // Tab Trayek tetap per moda sesuai pilihan.
@@ -613,6 +640,7 @@ function Maps() {
         setTab(t)
         setSelectedId(null)
         setPlanIdx(null)
+        setLegendOpen(false)
         if (t === 'petunjuk' && !asal) setPick('asal')
     }
     const switchMode = (md) => {
@@ -620,6 +648,7 @@ function Maps() {
         setSelectedId(null)
         setPlanIdx(null)
         setQuery('')
+        setLegendOpen(false)
     }
 
     const useMyLocation = () => {
@@ -642,49 +671,91 @@ function Maps() {
 
     /* ── Tampilan ── */
     return (
-        <section className="flex flex-col lg:flex-row h-[100dvh] lg:h-[calc(100vh-4rem)] lg:min-h-[640px]">
+        <section className="maps-page relative h-[calc(100dvh-5rem)] min-h-[420px] overflow-hidden bg-[#F7F4EA] text-[#12233F] lg:grid lg:min-h-[640px] lg:grid-cols-[390px_minmax(0,1fr)] xl:grid-cols-[430px_minmax(0,1fr)]">
             <style>{POPUP_CSS}</style>
-            <aside className="w-full lg:w-[420px] shrink-0 bg-[#0A47A9] flex flex-col" style={{ maxHeight: 'clamp(240px, 45dvh, 99999px)' }}>
-                <div className="shrink-0 px-4 pt-4">
-                    <div className="flex gap-4 mb-3">
-                        {[['petunjuk', 'Petunjuk Arah'], ['trayek', 'Trayek']].map(([k, l]) => (
+            {panelOpen && (
+                <button
+                    type="button"
+                    tabIndex={-1}
+                    aria-label="Tutup sidebar peta"
+                    onClick={() => setPanelOpen(false)}
+                    className="fixed inset-x-0 bottom-0 top-20 z-[1150] bg-[#12233F]/45 lg:hidden"
+                />
+            )}
+            <aside
+                id="maps-sidebar"
+                aria-label="Panel pencarian dan rute"
+                className={`fixed bottom-0 left-0 top-20 z-[1200] flex w-[88vw] max-w-[400px] min-w-0 flex-col border-r-2 border-[#12233F] bg-[#F7F4EA] transition-transform duration-300 lg:static lg:z-auto lg:order-1 lg:h-full lg:w-full lg:max-w-none lg:min-h-0 lg:translate-x-0 lg:shadow-none ${panelOpen ? 'visible translate-x-0 shadow-[6px_0_0_rgba(18,35,63,0.3)]' : 'invisible -translate-x-full'} lg:visible`}
+            >
+                <div className="shrink-0 border-b-2 border-[#12233F] bg-white px-4 py-4 sm:px-5">
+                    <div className="mb-4 flex items-end justify-between gap-3">
+                        <div>
+                            <h1 className="font-pixel text-2xl font-semibold leading-none text-[#1B3A8C] sm:text-3xl">Peta Perjalanan</h1>
+                            <p className="mt-1.5 text-xs text-gray-500">Temukan trayek dan rute transit di Bogor.</p>
+                        </div>
+                        <div className="flex shrink-0 items-center gap-2">
+                            <span className="hidden border-2 border-[#12233F] bg-[#F97316] px-2.5 py-1 font-pixel text-lg leading-none text-[#12233F] shadow-[2px_2px_0_#12233F] sm:block">Bogor</span>
+                            <button
+                                type="button"
+                                onClick={() => setPanelOpen(false)}
+                                aria-label="Tutup sidebar"
+                                className="border-2 border-[#12233F] bg-white p-2 text-[#12233F] transition-colors hover:bg-[#F97316] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] lg:hidden"
+                            >
+                                <Icon name="close" className="h-4 w-4" />
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 border-2 border-[#12233F] bg-white" role="tablist" aria-label="Jenis pencarian peta">
+                        {[['petunjuk', 'Petunjuk Arah'], ['trayek', 'Cari Trayek']].map(([k, l]) => (
                             <button
                                 key={k}
+                                id={`maps-tab-${k}`}
                                 type="button"
+                                role="tab"
+                                aria-selected={tab === k}
+                                aria-controls="maps-content"
                                 onClick={() => switchTab(k)}
-                                className={`pb-1 text-sm font-semibold border-b-2 transition-colors ${tab === k ? 'text-white border-white' : 'text-blue-200 border-transparent hover:text-white'}`}
+                                className={`min-h-11 px-3 py-2.5 text-sm font-extrabold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#F97316] ${k === 'petunjuk' ? 'border-r-2 border-[#12233F]' : ''} ${tab === k ? 'bg-[#1B3A8C] text-white' : 'bg-white text-gray-600 hover:bg-[#EAF0FF] hover:text-[#1B3A8C]'}`}
                             >
                                 {l}
                             </button>
                         ))}
                     </div>
+
                     {tab === 'trayek' ? (
-                        <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-none">
-                            {[['biskita', 'Bis Kita', 'bus'], ['angkot', 'Angkot Bogor', 'car']].map(([k, l, ic]) => (
+                        <div className="mt-4 grid grid-cols-2 gap-2" aria-label="Pilih moda transportasi">
+                            {[['biskita', 'BisKita', 'bus'], ['angkot', 'Angkot', 'car']].map(([k, l, ic]) => (
                                 <button
                                     key={k}
                                     type="button"
+                                    aria-pressed={mode === k}
                                     onClick={() => switchMode(k)}
-                                    className={`flex items-center gap-1.5 pb-1.5 text-sm border-b-2 transition-colors ${mode === k ? 'text-white font-bold border-[#F97316]' : 'text-blue-200 border-transparent hover:text-white'}`}
+                                    className={`flex min-h-11 items-center justify-center gap-2 border-2 px-3 py-2.5 text-sm font-extrabold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] ${mode === k ? 'border-[#12233F] bg-[#1B3A8C] text-white shadow-[3px_3px_0_#F97316]' : 'border-[#12233F]/25 bg-white text-gray-600 hover:border-[#1B3A8C] hover:text-[#1B3A8C]'}`}
                                 >
-                                    <Icon name={ic} className={`w-4 h-4 ${mode === k ? 'text-[#F97316]' : ''}`} />{l}
+                                    <Icon name={ic} className="h-5 w-5 shrink-0" />{l}
                                 </button>
                             ))}
                         </div>
                     ) : (
-                        <p className="flex items-center gap-2 pb-1.5 text-xs text-blue-100">
-                            <Icon name="bus" className="w-4 h-4 text-[#F97316]" />
-                            <Icon name="car" className="w-4 h-4 text-[#F97316]" />
-                            Rute menggabungkan Bis Kita dan angkot
+                        <p className="mt-4 flex flex-wrap items-center gap-2 border-l-4 border-[#F97316] bg-[#F7F4EA] px-3 py-2 text-xs font-semibold text-gray-600">
+                            <span className="flex items-center gap-1 text-[#1B3A8C]"><Icon name="bus" className="h-4 w-4" /><Icon name="car" className="h-4 w-4" /></span>
+                            Rute dapat menggabungkan BisKita dan angkot.
                         </p>
                     )}
-
                 </div>
 
-                <div className="flex-1 overflow-y-auto px-4 pt-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
-                    {status === 'loading' && <p className="text-sm text-blue-100">Memuat data rute…</p>}
+                <div
+                    id="maps-content"
+                    role="tabpanel"
+                    aria-labelledby={`maps-tab-${tab}`}
+                    className="min-h-0 flex-1 overflow-y-auto px-4 py-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:px-5"
+                >
+                    {status === 'loading' && (
+                        <div className="border-2 border-[#12233F] bg-white p-4 text-sm font-semibold shadow-[3px_3px_0_#12233F]">Memuat data rute…</div>
+                    )}
                     {status === 'error' && (
-                        <div className="bg-red-50 text-red-800 text-sm rounded-xl p-3.5 leading-relaxed">
+                        <div className="border-2 border-red-800 bg-red-50 p-4 text-sm leading-relaxed text-red-800 shadow-[3px_3px_0_#7F1D1D]">
                             Data rute gagal dimuat: {error}. Pastikan backend API berjalan (VITE_API_URL) dan data rute sudah di-seed.
                         </div>
                     )}
@@ -694,22 +765,23 @@ function Maps() {
                             <RouteDetail route={selected} onBack={() => setSelectedId(null)} />
                         ) : (
                             <>
-                                <SectionLabel>Tujuan &amp; pencarian koridor</SectionLabel>
-                                <div className="flex items-center bg-white rounded-xl px-3 py-2.5 gap-2.5 mb-4">
+                                <SectionLabel htmlFor="maps-route-query">Cari koridor atau nomor trayek</SectionLabel>
+                                <div className="mb-5 flex min-h-[50px] items-center gap-2.5 border-2 border-[#12233F]/25 bg-white px-3.5 shadow-[3px_3px_0_#12233F] transition-colors focus-within:border-[#1B3A8C] focus-within:ring-2 focus-within:ring-[#1B3A8C]/15">
                                     <span className="text-[#F97316]"><Icon name="pin" /></span>
                                     <input
-                                        type="text"
+                                        id="maps-route-query"
+                                        type="search"
                                         value={query}
                                         onChange={(e) => setQuery(e.target.value)}
-                                        placeholder={mode === 'biskita' ? 'Pilih koridor... (cth: K1 atau Bubulak)' : 'Cari nomor trayek angkot (cth: 02, 03, 10)...'}
-                                        className="flex-1 min-w-0 bg-transparent text-sm text-gray-800 outline-none placeholder-gray-400"
+                                        placeholder={mode === 'biskita' ? 'Contoh: K1 atau Bubulak' : 'Contoh: 02, 03, atau 10'}
+                                        className="min-w-0 flex-1 bg-transparent text-sm font-medium text-[#12233F] outline-none placeholder:font-normal placeholder:text-gray-400"
                                     />
                                     <span className="text-gray-400"><Icon name="sliders" /></span>
                                 </div>
-                                <div className="flex flex-col gap-3">
+                                <div className="flex flex-col gap-4">
                                     {filtered.map((r) => <RouteCard key={r.id} route={r} onClick={() => setSelectedId(r.id)} />)}
                                     {!filtered.length && (
-                                        <p className="text-sm text-blue-100">Tidak ada trayek yang cocok dengan “{query}”. Coba nomor atau nama lokasi lain.</p>
+                                        <p className="border-2 border-dashed border-[#12233F]/30 bg-white p-4 text-sm leading-relaxed text-gray-600">Tidak ada trayek yang cocok dengan “{query}”. Coba nomor atau nama lokasi lain.</p>
                                     )}
                                 </div>
                             </>
@@ -721,77 +793,86 @@ function Maps() {
                             <PlanDetail plan={plan} onBack={() => setPlanIdx(null)} />
                         ) : (
                             <>
-                                <div className="flex flex-col gap-3">
-                                    <div>
-                                        <SectionLabel>Asal</SectionLabel>
-                                        <PlaceInput
-                                            value={asalText}
-                                            selected={asalPlace}
-                                            onChange={(t) => { setAsalText(t); setAsalPlace(null) }}
-                                            onSelect={(p) => applyPlace('asal', p)}
-                                            onFocus={() => setPick('asal')}
-                                            onSubmit={() => resolveText('asal')}
-                                            onClear={() => clearPoint('asal')}
-                                            pinClass="text-[#16A34A]"
-                                            placeholder="Ketik lokasi asal... (cth: Stasiun Bogor)"
-                                        />
+                                <div className="border-2 border-[#12233F] bg-white p-4 shadow-[4px_4px_0_#12233F]">
+                                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
+                                        <div>
+                                            <SectionLabel htmlFor="maps-asal">Dari mana?</SectionLabel>
+                                            <PlaceInput
+                                                id="maps-asal"
+                                                value={asalText}
+                                                selected={asalPlace}
+                                                onChange={(t) => { setAsalText(t); setAsalPlace(null) }}
+                                                onSelect={(p) => applyPlace('asal', p)}
+                                                onFocus={() => setPick('asal')}
+                                                onSubmit={() => resolveText('asal')}
+                                                onClear={() => clearPoint('asal')}
+                                                pinClass="text-[#16A34A]"
+                                                placeholder="Contoh: Stasiun Bogor"
+                                                className="[&>div]:rounded-none [&>ul]:rounded-none [&>ul]:border-2 [&>ul]:border-[#12233F]"
+                                            />
+                                        </div>
+                                        <div>
+                                            <SectionLabel htmlFor="maps-tujuan">Mau ke mana?</SectionLabel>
+                                            <PlaceInput
+                                                id="maps-tujuan"
+                                                value={tujuanText}
+                                                selected={tujuanPlace}
+                                                onChange={(t) => { setTujuanText(t); setTujuanPlace(null) }}
+                                                onSelect={(p) => applyPlace('tujuan', p)}
+                                                onFocus={() => setPick('tujuan')}
+                                                onSubmit={() => resolveText('tujuan')}
+                                                onClear={() => clearPoint('tujuan')}
+                                                placeholder="Contoh: Kebun Raya"
+                                                className="[&>div]:rounded-none [&>ul]:rounded-none [&>ul]:border-2 [&>ul]:border-[#12233F]"
+                                            />
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={useMyLocation}
+                                            className="flex min-h-11 items-center justify-center gap-2 border-2 border-[#12233F] bg-[#F7F4EA] px-3 py-2.5 text-xs font-extrabold text-[#1B3A8C] transition-colors hover:bg-[#EAF0FF] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] sm:col-span-2 lg:col-span-1"
+                                        >
+                                            <span className="text-[#F97316]"><Icon name="locate" /></span>Gunakan lokasi saya sebagai asal
+                                        </button>
+                                        {geoMsg && <p className="border-l-4 border-[#F97316] bg-orange-50 px-3 py-2 text-xs leading-relaxed text-[#9A3412] sm:col-span-2 lg:col-span-1">{geoMsg}</p>}
                                     </div>
-                                    <div>
-                                        <SectionLabel>Tujuan</SectionLabel>
-                                        <PlaceInput
-                                            value={tujuanText}
-                                            selected={tujuanPlace}
-                                            onChange={(t) => { setTujuanText(t); setTujuanPlace(null) }}
-                                            onSelect={(p) => applyPlace('tujuan', p)}
-                                            onFocus={() => setPick('tujuan')}
-                                            onSubmit={() => resolveText('tujuan')}
-                                            onClear={() => clearPoint('tujuan')}
-                                            placeholder="Ketik lokasi tujuan... (cth: Kebun Raya)"
-                                        />
-                                    </div>
-                                    <button
-                                        type="button"
-                                        onClick={useMyLocation}
-                                        className="flex items-center gap-2.5  hover:bg-white/15 text-white text-xs font-bold uppercase tracking-wide rounded-xl px-3 py-3 transition-colors"
-                                    >
-                                        <span className="text-[#F97316]"><Icon name="locate" /></span>Dari lokasi Anda sekarang
-                                    </button>
-                                    {geoMsg && <p className="text-xs text-orange-200">{geoMsg}</p>}
                                 </div>
 
-                                <div className="mt-6 -mx-4 border-t border-white/15">
-                                    <p className="px-4 py-3 text-xs font-bold uppercase tracking-wider text-white">Rute rekomendasi</p>
+                                <div className="mt-7">
+                                    <div className="flex items-end justify-between gap-3">
+                                        <h2 className="font-pixel text-3xl font-semibold leading-none text-[#1B3A8C]">Rute rekomendasi</h2>
+                                        {plans.length > 0 && <span className="shrink-0 text-xs font-bold text-gray-500">{plans.length} pilihan</span>}
+                                    </div>
                                     {!asal || !tujuan ? (
-                                        <p className="px-4 pb-2 text-sm text-blue-100 leading-relaxed">
-                                            {pick === 'tujuan' ? 'Ketik atau klik peta untuk menentukan tujuan.' : 'Ketik atau klik peta untuk memilih asal dan tujuan, rute terbaik akan muncul di sini.'}
+                                        <p className="mt-4 border-2 border-dashed border-[#12233F]/30 bg-white p-4 text-sm leading-relaxed text-gray-600">
+                                            {pick === 'tujuan' ? 'Ketik tujuan atau klik titiknya pada peta. Rute rekomendasi akan muncul setelah asal dan tujuan terisi.' : 'Isi asal dan tujuan dengan mengetik lokasi atau mengklik peta. Rute rekomendasi akan muncul di sini.'}
                                         </p>
                                     ) : plans.length === 0 ? (
-                                        <p className="px-4 pb-2 text-sm text-blue-100 leading-relaxed">
-                                            Tidak ditemukan rute Bis Kita atau angkot (termasuk transit) dalam jarak jalan {MAX_WALK_KM} km. Geser penanda asal atau tujuan.
+                                        <p className="mt-4 border-2 border-dashed border-[#12233F]/30 bg-white p-4 text-sm leading-relaxed text-gray-600">
+                                            Tidak ditemukan rute BisKita atau angkot, termasuk transit, dalam jarak jalan {MAX_WALK_KM} km. Geser penanda asal atau tujuan lalu coba lagi.
                                         </p>
                                     ) : (
-                                        <>
+                                        <div className="mt-4 flex flex-col gap-4">
                                             {plans.map((p, i) => (
-                                            <button
-                                                key={p.sig}
-                                                type="button"
-                                                onClick={() => setPlanIdx(i)}
-                                                className="w-full text-left px-4 py-4 border-t border-white/15 hover:bg-white/5 transition-colors"
-                                            >
-                                                {p.tag && (
-                                                    <span className="inline-flex items-center gap-1 bg-[#F97316] text-white text-[10px] font-bold uppercase tracking-wide rounded-full px-2.5 py-0.5 mb-1.5">
-                                                        <Icon name="clock" className="w-3 h-3" />{p.tag}
-                                                    </span>
-                                                )}
-                                                <PlanSummary plan={p} />
-                                                <div className="my-2.5"><PlanChips plan={p} /></div>
-                                                <p className="text-xs text-blue-100">
-                                                    Tarif ~{fmtFare(p.fare)} • Naik pukul <b className="text-white">{hhmm(p.depart)}</b> dari jalur {p.legs[0].route.ref} ({p.legs[0].route.from}{p.legs[0].route.to && ' → ' + p.legs[0].route.to})
-                                                    {p.transfers > 0 && <> • lanjut {p.legs.slice(1).map((l) => l.route.ref).join(', ')}</>}
-                                                </p>
-                                            </button>
+                                                <button
+                                                    key={p.sig}
+                                                    type="button"
+                                                    onClick={() => setPlanIdx(i)}
+                                                    className="w-full border-2 border-[#12233F] bg-white p-4 text-left shadow-[3px_3px_0_#12233F] transition-[transform,box-shadow] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0_#12233F] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]"
+                                                >
+                                                    {p.tag && (
+                                                        <span className="mb-2 inline-flex items-center gap-1 border-2 border-[#12233F] bg-[#F97316] px-2.5 py-1 text-[10px] font-extrabold text-[#12233F]">
+                                                            <Icon name="clock" className="h-3 w-3" />{p.tag}
+                                                        </span>
+                                                    )}
+                                                    <PlanSummary plan={p} />
+                                                    <div className="my-3"><PlanChips plan={p} /></div>
+                                                    <p className="border-t-2 border-[#12233F]/10 pt-3 text-xs leading-relaxed text-gray-600">
+                                                        Tarif ~{fmtFare(p.fare)} • Naik pukul <b className="text-[#12233F]">{hhmm(p.depart)}</b> dari jalur {p.legs[0].route.ref} ({p.legs[0].route.from}{p.legs[0].route.to && ' → ' + p.legs[0].route.to})
+                                                        {p.transfers > 0 && <> • lanjut {p.legs.slice(1).map((l) => l.route.ref).join(', ')}</>}
+                                                    </p>
+                                                </button>
                                             ))}
-                                        </>
+                                        </div>
                                     )}
                                 </div>
                             </>
@@ -800,29 +881,101 @@ function Maps() {
                 </div>
             </aside>
 
-            {/* Peta */}
-            <div className="relative isolate flex-1 min-h-[50dvh] lg:h-auto">
-                <div ref={mapEl} className="absolute inset-0 bg-gray-100" />
+            {/* Peta penuh di mobile/tablet; sidebar menjadi overlay. Desktop tetap dua kolom. */}
+            <div className="absolute inset-0 isolate w-full lg:relative lg:inset-auto lg:order-2 lg:h-full lg:min-h-0">
+                <div ref={mapEl} className="absolute inset-0 bg-[#E8E1CC]" />
+                {!panelOpen && (
+                    <button
+                        type="button"
+                        onClick={() => setPanelOpen(true)}
+                        aria-expanded={panelOpen}
+                        aria-controls="maps-sidebar"
+                        className="absolute left-3 top-3 z-[1100] flex min-h-11 items-center gap-2 border-2 border-[#12233F] bg-[#F7F4EA] px-3 py-2.5 text-xs font-extrabold text-[#1B3A8C] shadow-[3px_3px_0_#12233F] transition-colors hover:bg-[#EAF0FF] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] lg:hidden"
+                    >
+                        <Icon name="sliders" className="h-4 w-4 text-[#F97316]" />Buka panel rute
+                    </button>
+                )}
                 {tab === 'petunjuk' && pick && (
-                    <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] bg-[#1B3A8C] text-white text-xs font-semibold rounded-full px-4 py-2 shadow-lg pointer-events-none">
+                    <div className="pointer-events-none absolute left-1/2 top-16 z-[1000] w-max max-w-[calc(100%_-_6rem)] -translate-x-1/2 border-2 border-[#12233F] bg-[#F7F4EA] px-3 py-2 text-center text-xs font-extrabold text-[#12233F] shadow-[3px_3px_0_#12233F] lg:top-3">
                         Klik peta untuk memilih {pick === 'asal' ? 'lokasi asal' : 'tujuan'}
                     </div>
                 )}
                 {legend.length > 0 && (
-                    <div className="absolute bottom-4 left-4 right-4 z-[1000] pointer-events-none flex justify-center">
-                        <div className="bg-white/95 backdrop-blur rounded-2xl shadow-lg px-4 py-2.5 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-gray-700 max-w-full">
-                            <span className="flex items-center gap-1.5 font-bold text-gray-900"><Icon name="pin" className="w-3.5 h-3.5 text-[#F97316]" />Legenda Jalur:</span>
+                    <div className="pointer-events-none absolute bottom-3 left-3 right-3 z-[1000] flex justify-center">
+                        <div className="pointer-events-auto flex max-h-24 max-w-full flex-wrap items-center gap-x-3 gap-y-1.5 overflow-y-auto border-2 border-[#12233F] bg-[#F7F4EA]/95 px-3 py-2 text-[11px] text-gray-700 shadow-[3px_3px_0_#12233F]">
+                            <span className="flex items-center gap-1.5 font-extrabold text-[#12233F]"><Icon name="pin" className="h-3.5 w-3.5 text-[#F97316]" />Legenda</span>
                             {legend.map((r) => (
                                 <span key={r.id} className="flex items-center gap-1.5">
-                                    <span className="w-2.5 h-2.5 rounded-full" style={{ background: r.color }} />
-                                    {r.ref} ({r.to || r.from})
+                                    <span className="h-2.5 w-2.5 shrink-0 border border-[#12233F]/30" style={{ background: r.color }} />
+                                    <span className="max-w-[9rem] truncate sm:max-w-[12rem]">{r.ref} ({r.to || r.from})</span>
                                 </span>
                             ))}
-                            {routes.length > legend.length && <span className="text-gray-400">+{routes.length - legend.length} lainnya</span>}
+                            {routes.length > legend.length && (
+                                <button
+                                    type="button"
+                                    onClick={() => setLegendOpen(true)}
+                                    aria-haspopup="dialog"
+                                    aria-expanded={legendOpen}
+                                    aria-controls="maps-legend-dialog"
+                                    className="border border-[#12233F]/25 bg-white px-2 py-0.5 font-extrabold text-[#1B3A8C] transition-colors hover:border-[#F97316] hover:bg-[#F97316] hover:text-[#12233F] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]"
+                                >
+                                    +{routes.length - legend.length} lainnya
+                                </button>
+                            )}
                         </div>
                     </div>
                 )}
             </div>
+
+            {legendOpen && (
+                <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 sm:p-6">
+                    <button
+                        type="button"
+                        tabIndex={-1}
+                        aria-label="Tutup dialog legenda"
+                        onClick={() => setLegendOpen(false)}
+                        className="absolute inset-0 bg-[#12233F]/55"
+                    />
+                    <div
+                        id="maps-legend-dialog"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="maps-legend-title"
+                        aria-describedby="maps-legend-description"
+                        className="relative flex max-h-[calc(100dvh-2rem)] w-full max-w-3xl flex-col border-2 border-[#12233F] bg-[#F7F4EA] shadow-[6px_6px_0_#12233F] sm:max-h-[calc(100dvh-3rem)]"
+                    >
+                        <div className="flex shrink-0 items-start justify-between gap-4 border-b-2 border-[#12233F] bg-white px-4 py-4 sm:px-5">
+                            <div>
+                                <h2 id="maps-legend-title" className="font-pixel text-3xl font-semibold leading-none text-[#1B3A8C]">Legenda Rute</h2>
+                                <p id="maps-legend-description" className="mt-1.5 text-xs text-gray-500">{routes.length} rute yang sedang ditampilkan pada peta.</p>
+                            </div>
+                            <button
+                                type="button"
+                                autoFocus
+                                onClick={() => setLegendOpen(false)}
+                                aria-label="Tutup legenda"
+                                className="shrink-0 border-2 border-[#12233F] bg-white p-2 text-[#12233F] transition-colors hover:bg-[#F97316] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]"
+                            >
+                                <Icon name="close" className="h-4 w-4" />
+                            </button>
+                        </div>
+                        <ul className="grid min-h-0 gap-2 overflow-y-auto p-4 sm:grid-cols-2 sm:p-5">
+                            {routes.map((r) => (
+                                <li key={r.id} className="flex min-w-0 items-start gap-3 border-2 border-[#12233F]/20 bg-white p-3">
+                                    <span className="mt-0.5 h-4 w-4 shrink-0 border-2 border-[#12233F]" style={{ background: r.color }} aria-hidden="true" />
+                                    <div className="min-w-0">
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            <span className="border border-[#12233F] px-1.5 py-0.5 text-[11px] font-extrabold text-white" style={{ background: r.color }}>{r.ref}</span>
+                                            <span className="text-[10px] font-extrabold uppercase tracking-wide text-gray-500">{r.kind === 'biskita' ? 'BisKita' : 'Angkot'}</span>
+                                        </div>
+                                        <p className="mt-1.5 text-xs font-bold leading-relaxed text-[#12233F]">{r.from}{r.to && <> <span className="text-[#F97316]">→</span> {r.to}</>}</p>
+                                    </div>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                </div>
+            )}
         </section>
     )
 }
