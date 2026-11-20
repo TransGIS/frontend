@@ -106,7 +106,8 @@ async function trayek(kind) {
 export const adminApi = {
     login: (username, password) => req('/api/auth/login', { method: 'POST', body: { username, password } }),
     forgot: (email) => req('/api/auth/forgot', { method: 'POST', body: { email } }),
-    dashboard: () => req('/api/dashboard'),
+    dashboard: (range = '7d') => req(`/api/dashboard?range=${encodeURIComponent(range)}`),
+    notifications: (limit = 12) => req(`/api/notifications?limit=${encodeURIComponent(limit)}`),
     trayek,
     get: async (kind, id) => toForm(await req(`/api/routes/${encodeURIComponent(id)}`)),
     remove: (kind, id) => req(`/api/routes/${encodeURIComponent(id)}`, { method: 'DELETE' }),

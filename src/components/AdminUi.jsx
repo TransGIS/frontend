@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 const P = {
@@ -24,6 +25,10 @@ const P = {
     route: <><circle cx="6" cy="5" r="2" /><circle cx="18" cy="19" r="2" /><path d="M8 5h6a3 3 0 010 6h-4a3 3 0 000 6h6" /></>,
     users: <><circle cx="9" cy="8" r="3.5" /><path d="M2 20a7 7 0 0114 0M16 4.5a3.5 3.5 0 010 7M18 20a6 6 0 00-2-4.5" /></>,
     close: <path d="M6 6l12 12M18 6L6 18" />,
+    chevron: <path d="M6 9l6 6 6-6" />,
+    check: <path d="M4 12.5l5 5L20 6.5" />,
+    calendar: <><rect x="3.5" y="5" width="17" height="15" rx="1" /><path d="M3.5 10h17M8 3v4M16 3v4" /></>,
+    sort: <path d="M7 4v16M4 17l3 3 3-3M17 20V4M14 7l3-3 3 3" />,
 }
 export function Icon({ name, className = '' }) {
     const size = /(^|\s)w-/.test(className) ? '' : 'w-4 h-4 '
@@ -39,7 +44,7 @@ export function Logo({ className = '' }) {
                     <path d="M8 16h.01M16 16h.01" strokeWidth="3" />
                 </svg>
             </span>
-            <span className="font-pixel text-2xl font-semibold leading-none"><span className="text-[#1B3A8C]">Trans</span><span className="text-[#F97316]">GIS</span></span>
+            <span className="whitespace-nowrap font-pixel text-2xl font-semibold leading-none"><span className="text-[#1B3A8C]">Trans</span><span className="text-[#F97316]">GIS</span></span>
         </Link>
     )
 }
@@ -87,3 +92,83 @@ export function Field({ label, icon, type = 'text', value, onChange, placeholder
 export const PrimaryBtn = ({ children, ...p }) => (
     <button {...p} className="flex h-12 w-full items-center justify-center gap-2 border-2 border-[#12233F] bg-[#1B3A8C] px-4 text-sm font-extrabold text-white shadow-[4px_4px_0_#F97316] transition-colors hover:bg-[#12233F] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] disabled:cursor-wait disabled:opacity-60">{children}</button>
 )
+
+/* Dropdown filter bergaya design system TransGIS (krem–tinta, border tegas,
+   bayangan keras). Dipakai untuk filter trayek dan periode statistik. */
+export function FilterSelect({ label, value, options, onChange, icon = 'filter', align = 'left', className = '', disabled = false }) {
+    const [open, setOpen] = useState(false)
+    const box = useRef(null)
+    const trigger = useRef(null)
+    const current = options.find((option) => option.value === value) || options[0]
+
+    useEffect(() => {
+        if (!open) return
+        const onPointer = (event) => { if (box.current && !box.current.contains(event.target)) setOpen(false) }
+        const onKey = (event) => {
+            if (event.key === 'Escape') { setOpen(false); trigger.current?.focus() }
+        }
+        document.addEventListener('mousedown', onPointer)
+        document.addEventListener('keydown', onKey)
+        return () => {
+            document.removeEventListener('mousedown', onPointer)
+            document.removeEventListener('keydown', onKey)
+        }
+    }, [open])
+
+    const choose = (next) => { onChange(next); setOpen(false); trigger.current?.focus() }
+
+    return (
+        <div ref={box} className={`relative ${className}`}>
+            <button
+                ref={trigger}
+                type="button"
+                disabled={disabled}
+                onClick={() => setOpen((v) => !v)}
+                aria-haspopup="listbox"
+                aria-expanded={open}
+                aria-label={label}
+                className={`flex h-11 w-full items-center justify-between gap-3 border-2 px-3.5 text-xs font-extrabold text-[#12233F] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] disabled:cursor-wait disabled:opacity-60 ${open
+                    ? 'border-[#12233F] bg-[#F7F4EA] shadow-[3px_3px_0_#F97316]'
+                    : 'border-[#12233F]/30 bg-white hover:border-[#12233F] hover:bg-[#F7F4EA]'
+                    }`}
+            >
+                <span className="flex min-w-0 items-center gap-2.5">
+                    <Icon name={icon} className="h-4 w-4 shrink-0 text-[#F97316]" />
+                    <span className="truncate">{current?.label}</span>
+                </span>
+                <Icon name="chevron" className={`h-3.5 w-3.5 shrink-0 text-[#1B3A8C] transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+            </button>
+
+            {open && (
+                <div className={`absolute top-full z-[70] mt-2 w-full min-w-[14rem] max-w-[min(21rem,calc(100vw-2rem))] overflow-hidden border-2 border-[#12233F] bg-[#F7F4EA] shadow-[5px_5px_0_#12233F] ${align === 'right' ? 'right-0' : 'left-0'}`}>
+                    <p className="border-b-2 border-[#12233F]/15 bg-white/70 px-4 py-2.5 text-[10px] font-extrabold uppercase tracking-[0.14em] text-gray-500">{label}</p>
+                    <ul role="listbox" aria-label={label} className="max-h-64 overflow-y-auto p-2">
+                        {options.map((option) => {
+                            const active = option.value === value
+                            return (
+                                <li key={option.value}>
+                                    <button
+                                        type="button"
+                                        role="option"
+                                        aria-selected={active}
+                                        onClick={() => choose(option.value)}
+                                        className={`flex w-full items-center justify-between gap-3 border-l-2 px-3 py-2.5 text-left text-xs font-bold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#F97316] ${active
+                                            ? 'border-[#F97316] bg-[#1B3A8C] text-white'
+                                            : 'border-transparent text-[#12233F] hover:border-[#12233F]/40 hover:bg-white'
+                                            }`}
+                                    >
+                                        <span className="min-w-0">
+                                            <span className="block truncate">{option.label}</span>
+                                            {option.hint && <span className={`mt-0.5 block text-[11px] font-medium ${active ? 'text-white/70' : 'text-gray-500'}`}>{option.hint}</span>}
+                                        </span>
+                                        {active && <Icon name="check" className="h-3.5 w-3.5 shrink-0 text-[#F97316]" />}
+                                    </button>
+                                </li>
+                            )
+                        })}
+                    </ul>
+                </div>
+            )}
+        </div>
+    )
+}

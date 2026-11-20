@@ -1,12 +1,22 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { adminApi } from '../lib/adminApi'
-import { Icon } from './AdminUi'
+import { FilterSelect, Icon } from './AdminUi'
 import { RouteMapModal } from './AdminRouteMap'
 
 const PER = 5
 const KIND = { biskita: ['BisKita Trans Pakuan', 'koridor', 'Koridor BisKita Trans Pakuan'], angkot: ['Trayek Angkot Bogor', 'trayek', 'Trayek Angkot Bogor'] }
-const sel = 'h-11 border-2 border-[#12233F]/25 bg-white px-3 text-xs font-semibold text-[#12233F] outline-none transition-colors hover:border-[#1B3A8C] focus:border-[#1B3A8C] focus:ring-2 focus:ring-[#1B3A8C]/15'
+const STATUS_OPTIONS = [
+    { value: 'all', label: 'Semua status', hint: 'Tampilkan semua trayek' },
+    { value: 'aktif', label: 'Aktif', hint: 'Beroperasi normal' },
+    { value: 'nonaktif', label: 'Nonaktif', hint: 'Tidak beroperasi' },
+]
+const SORT_OPTIONS = [
+    { value: 'kode-asc', label: 'Kode A–Z' },
+    { value: 'kode-desc', label: 'Kode Z–A' },
+    { value: 'nama-asc', label: 'Nama A–Z' },
+    { value: 'halte-desc', label: 'Halte terbanyak' },
+]
 
 export default function AdminTrayek() {
     const { kind = 'biskita' } = useParams()
@@ -15,23 +25,38 @@ export default function AdminTrayek() {
     const [rows, setRows] = useState(null)
     const [err, setErr] = useState('')
     const [q, setQ] = useState('')
+    const [status, setStatus] = useState('all')
+    const [sort, setSort] = useState('kode-asc')
     const [page, setPage] = useState(1)
     const [toDelete, setToDelete] = useState(null)
     const [mapRow, setMapRow] = useState(null)
 
     const load = () => { setRows(null); setErr(''); adminApi.trayek(k).then((r) => setRows(r.items)).catch((e) => setErr(e.message)) }
-    useEffect(() => { load(); setQ(''); setPage(1) }, [k])
+    useEffect(() => { load(); setQ(''); setStatus('all'); setSort('kode-asc'); setPage(1) }, [k])
 
     const list = useMemo(() => {
         const s = q.trim().toLowerCase()
-        return (rows || []).filter((r) => !s || `${r.kode} ${r.from} ${r.to} ${r.via || ''}`.toLowerCase().includes(s))
-    }, [rows, q])
+        const filtered = (rows || []).filter((r) => {
+            const matchText = !s || `${r.kode} ${r.from} ${r.to} ${r.via || ''}`.toLowerCase().includes(s)
+            const matchStatus = status === 'all' || (r.status || 'aktif') === status
+            return matchText && matchStatus
+        })
+        const byKode = (a, b) => String(a.kode).localeCompare(String(b.kode), 'id', { numeric: true })
+        const sorted = [...filtered]
+        if (sort === 'kode-desc') sorted.sort((a, b) => byKode(b, a))
+        else if (sort === 'nama-asc') sorted.sort((a, b) => `${a.from} ${a.to}`.localeCompare(`${b.from} ${b.to}`, 'id'))
+        else if (sort === 'halte-desc') sorted.sort((a, b) => (b.halte || 0) - (a.halte || 0) || byKode(a, b))
+        else sorted.sort(byKode)
+        return sorted
+    }, [rows, q, status, sort])
     const pages = Math.max(1, Math.ceil(list.length / PER))
     const cur = Math.min(page, pages)
     const vis = list.slice((cur - 1) * PER, cur * PER)
+    const dirty = q.trim() !== '' || status !== 'all' || sort !== 'kode-asc'
+    const resetFilters = () => { setQ(''); setStatus('all'); setSort('kode-asc'); setPage(1) }
 
     const confirmDelete = async () => {
-        try { await adminApi.remove(k, toDelete.id); setToDelete(null); load() } catch (e) { setErr(e.message); setToDelete(null) }
+        try { await adminApi.remove(k, toDelete.id); setToDelete(null); load(); window.dispatchEvent(new Event('transgis:activity')) } catch (e) { setErr(e.message); setToDelete(null) }
     }
 
     return (
@@ -47,15 +72,27 @@ export default function AdminTrayek() {
                 <Link to={`/admin/trayek/${k}/baru`} className="inline-flex h-11 w-full items-center justify-center gap-2 border-2 border-[#12233F] bg-[#1B3A8C] px-4 text-xs font-extrabold text-white shadow-[4px_4px_0_#F97316] transition-colors hover:bg-[#12233F] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] sm:w-auto"><Icon name="plus" />Tambah Rute / Halte</Link>
             </div>
 
-            <div className="mt-7 flex flex-wrap gap-3 border-2 border-[#12233F] bg-white p-4 shadow-[4px_4px_0_#12233F]">
-                <label className="flex h-11 min-w-[220px] flex-1 items-center gap-2.5 border-2 border-[#12233F]/25 bg-[#F7F4EA] px-3 transition-colors focus-within:border-[#1B3A8C] focus-within:ring-2 focus-within:ring-[#1B3A8C]/15">
-                    <Icon name="search" className="shrink-0 text-[#F97316]" />
-                    <input aria-label="Cari trayek" value={q} onChange={(e) => { setQ(e.target.value); setPage(1) }} placeholder="Cari nomor koridor, nama trayek, atau terminal..." className="min-w-0 flex-1 bg-transparent text-xs font-medium text-[#12233F] outline-none placeholder:font-normal placeholder:text-gray-400" />
-                </label>
-                <select className={sel} aria-label="Status"><option>Aktif Normal</option><option>Nonaktif</option></select>
-                <select className={sel} aria-label="Arah layanan"><option>Arah Layanan: Semua</option><option>Pergi</option><option>Pulang</option></select>
-                <button type="button" className={`${sel} inline-flex items-center justify-center gap-2`}><Icon name="filter" className="text-[#F97316]" />Filter Lanjutan</button>
-                <button type="button" onClick={load} aria-label="Muat ulang" className={`${sel} grid w-11 place-items-center px-0`}><Icon name="refresh" /></button>
+            <div className="mt-7 border-2 border-[#12233F] bg-white shadow-[4px_4px_0_#12233F]">
+                <div className="flex flex-col gap-3 p-4 sm:p-5 lg:flex-row lg:items-center">
+                    <label className="flex h-11 min-w-0 flex-1 items-center gap-2.5 border-2 border-[#12233F]/25 bg-[#F7F4EA] px-3.5 transition-colors focus-within:border-[#1B3A8C] focus-within:ring-2 focus-within:ring-[#1B3A8C]/15">
+                        <Icon name="search" className="shrink-0 text-[#F97316]" />
+                        <input aria-label="Cari trayek" value={q} onChange={(e) => { setQ(e.target.value); setPage(1) }} placeholder="Cari nomor koridor, nama trayek, atau terminal..." className="min-w-0 flex-1 bg-transparent text-xs font-medium text-[#12233F] outline-none placeholder:font-normal placeholder:text-gray-400" />
+                        {q && <button type="button" onClick={() => { setQ(''); setPage(1) }} aria-label="Hapus kata pencarian" className="grid h-6 w-6 shrink-0 place-items-center text-gray-400 transition-colors hover:text-[#12233F] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]"><Icon name="close" className="h-3.5 w-3.5" /></button>}
+                    </label>
+                    <div className="grid shrink-0 grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:items-center">
+                        <FilterSelect label="Status trayek" value={status} options={STATUS_OPTIONS} onChange={(v) => { setStatus(v); setPage(1) }} className="sm:w-44" />
+                        <FilterSelect label="Urutkan" icon="sort" value={sort} options={SORT_OPTIONS} onChange={(v) => { setSort(v); setPage(1) }} className="sm:w-48" align="right" />
+                        {dirty && (
+                            <button type="button" onClick={resetFilters} className="inline-flex h-11 items-center justify-center gap-2 border-2 border-[#12233F]/30 bg-white px-3.5 text-xs font-extrabold text-[#12233F] transition-colors hover:border-[#12233F] hover:bg-[#F7F4EA] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]">
+                                <Icon name="close" className="h-3.5 w-3.5 text-[#F97316]" />Reset
+                            </button>
+                        )}
+                        <button type="button" onClick={load} aria-label="Muat ulang data trayek" title="Muat ulang" className="grid aspect-square h-11 w-11 place-items-center border-2 border-[#12233F]/30 bg-white text-[#12233F] transition-colors hover:border-[#12233F] hover:bg-[#F7F4EA] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]"><Icon name="refresh" /></button>
+                    </div>
+                </div>
+                {dirty && (
+                    <p className="border-t-2 border-[#12233F]/10 px-4 py-2.5 text-[11px] font-semibold text-gray-500 sm:px-5">Filter aktif: {STATUS_OPTIONS.find((o) => o.value === status)?.label}{q.trim() ? ` · pencarian “${q.trim()}”` : ''} · {SORT_OPTIONS.find((o) => o.value === sort)?.label}</p>
+                )}
             </div>
 
             <div className="mt-6 border-2 border-[#12233F] bg-white shadow-[4px_4px_0_#12233F]">
@@ -70,7 +107,7 @@ export default function AdminTrayek() {
                                 {vis.map((r) => (
                                     <tr key={r.id} className="border-b-2 border-[#12233F]/10 transition-colors last:border-0 hover:bg-[#F7F4EA]">
                                         <td className="py-4 pl-6"><span className="inline-flex h-8 min-w-10 items-center justify-center border-2 border-[#12233F] px-2 text-xs font-extrabold text-white" style={{ background: r.color }}>{r.kode}</span></td>
-                                        <td className="py-3 pr-4"><p className="text-sm font-extrabold leading-5 text-[#12233F]">{r.from}{r.to && <><span className="text-[#F97316]"> ⇌ </span>{r.to}</>}</p>{r.via && <p className="mt-1 text-xs text-gray-500">Via {r.via}</p>}</td>
+                                        <td className="py-3 pr-4"><p className="text-sm font-extrabold leading-5 text-[#12233F]">{r.from}{r.to && <><span className="text-[#F97316]"> ⇌ </span>{r.to}</>}</p><div className="mt-1 flex flex-wrap items-center gap-2">{r.via && <p className="text-xs text-gray-500">Via {r.via}</p>}{r.status === 'nonaktif' && <span className="border border-red-700/30 bg-red-50 px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-red-700">Nonaktif</span>}</div></td>
                                         <td className="text-center">{r.halte ? <><b className="block text-sm text-[#12233F]">{r.halte}</b><span className="text-[11px] text-gray-400">halte</span></> : <span className="text-xs text-gray-400">—</span>}</td>
                                         <td className="text-center"><span className="inline-block whitespace-nowrap border border-[#12233F]/20 bg-[#F7F4EA] px-2 py-1 text-xs font-bold text-[#12233F]">{r.estimasi}</span></td>
                                         <td className="whitespace-nowrap text-sm font-extrabold text-[#12233F]">{r.tarif}</td>
@@ -81,7 +118,14 @@ export default function AdminTrayek() {
                                         </div></td>
                                     </tr>
                                 ))}
-                                {rows && !vis.length && <tr><td colSpan={6} className="p-8 text-center text-sm text-gray-500">Tidak ada {KIND[k][1]} yang cocok dengan “{q}”.</td></tr>}
+                                {rows && !vis.length && (
+                                    <tr>
+                                        <td colSpan={6} className="p-8 text-center">
+                                            <p className="text-sm text-gray-500">Tidak ada {KIND[k][1]} yang cocok dengan filter ini.</p>
+                                            {dirty && <button type="button" onClick={resetFilters} className="mt-3 inline-flex h-9 items-center justify-center gap-2 border-2 border-[#12233F] bg-white px-3 text-xs font-extrabold text-[#12233F] transition-colors hover:bg-[#F7F4EA] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]"><Icon name="refresh" className="h-3.5 w-3.5" />Atur ulang filter</button>}
+                                        </td>
+                                    </tr>
+                                )}
                             </tbody>
                         </table>
                     </div>

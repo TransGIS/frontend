@@ -59,6 +59,13 @@
   border-radius: 0 !important;
 }
 
+/* Tooltip chart (reaviz) dirender lewat portal ke <body>, sehingga tidak
+   mewarisi font halaman. Samakan dengan tipografi isi TransGIS. */
+[role="tooltip"],
+[role="tooltip"] * {
+  font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif !important;
+}
+
 .landing-page #tarif h2 {
   font-family: 'Pixelify Sans', monospace;
   font-weight: 600;
