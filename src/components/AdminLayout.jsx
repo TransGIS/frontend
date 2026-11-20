@@ -103,7 +103,7 @@ export default function AdminLayout() {
     return (
         <div className="admin-page min-h-screen bg-[#F7F4EA] text-[#12233F]">
             <header className="fixed inset-x-0 top-0 z-40 flex h-20 items-center gap-3 border-b-2 border-[#12233F] bg-white px-4 sm:px-6 lg:px-8">
-                <button type="button" onClick={() => setOpen(!open)} aria-label={open ? 'Tutup menu admin' : 'Buka menu admin'} aria-expanded={open} className="-ml-1 grid aspect-square h-10 w-10 shrink-0 place-items-center border-2 border-[#12233F] text-[#12233F] transition-colors hover:bg-[#F97316] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] lg:hidden"><Icon name="menu" className="h-5 w-5" /></button>
+                <button type="button" onClick={() => setOpen(!open)} aria-label={open ? 'Tutup menu admin' : 'Buka menu admin'} aria-expanded={open} className="press-pixel press-pixel-xs -ml-1 grid aspect-square h-10 w-10 shrink-0 place-items-center border-2 border-[#12233F] text-[#12233F] hover:bg-[#F97316] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] lg:hidden"><Icon name="menu" className="h-5 w-5" /></button>
                 <Logo className="shrink-0" />
                 <label className="ml-auto hidden h-11 w-96 min-w-0 max-w-[38%] items-center gap-2 border-2 border-[#12233F]/20 bg-[#F7F4EA] px-3 transition-colors focus-within:border-[#1B3A8C] focus-within:ring-2 focus-within:ring-[#1B3A8C]/15 md:flex">
                     <Icon name="search" className="shrink-0 text-[#F97316]" />
@@ -116,7 +116,7 @@ export default function AdminLayout() {
                         aria-label={unread ? `Notifikasi, ${unread} aktivitas baru` : 'Notifikasi'}
                         aria-expanded={notifOpen}
                         aria-haspopup="dialog"
-                        className={`relative grid aspect-square h-10 w-10 shrink-0 place-items-center border-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] ${notifOpen ? 'border-[#12233F] bg-[#F7F4EA] text-[#12233F]' : 'border-[#12233F]/20 text-[#12233F] hover:border-[#12233F] hover:bg-[#F7F4EA]'}`}
+                        className={`press-pixel press-pixel-xs relative grid aspect-square h-10 w-10 shrink-0 place-items-center border-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] ${notifOpen ? 'border-[#12233F] bg-[#F7F4EA] text-[#12233F]' : 'border-[#12233F]/20 text-[#12233F] hover:border-[#12233F] hover:bg-[#F7F4EA]'}`}
                     >
                         <Icon name="bell" className="h-5 w-5" />
                         {unread > 0 && <span className="absolute -right-2 -top-2 grid h-5 min-w-5 place-items-center border-2 border-[#12233F] bg-[#F97316] px-1 text-[10px] font-extrabold leading-none text-[#12233F]">{unread > 9 ? '9+' : unread}</span>}
@@ -148,7 +148,7 @@ export default function AdminLayout() {
                             {notifErr ? (
                                 <div className="p-4">
                                     <p role="alert" className="border-l-4 border-red-700 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">{notifErr}</p>
-                                    <button type="button" onClick={() => { setNotifLoading(true); loadNotifs(true) }} className="mt-3 h-9 w-full border-2 border-[#12233F] bg-white text-xs font-extrabold text-[#12233F] transition-colors hover:bg-[#F7F4EA] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]">Coba lagi</button>
+                                    <button type="button" onClick={() => { setNotifLoading(true); loadNotifs(true) }} className="press-pixel press-pixel-xs mt-3 h-9 w-full border-2 border-[#12233F] bg-white text-xs font-extrabold text-[#12233F] hover:bg-[#F7F4EA] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]">Coba lagi</button>
                                 </div>
                             ) : notifLoading && !notifs.length ? (
                                 <p className="p-5 text-xs font-semibold text-gray-500">Memuat notifikasi…</p>
@@ -205,8 +205,8 @@ export default function AdminLayout() {
                         <h2 id="logout-title" className="mt-4 font-pixel text-3xl font-semibold text-[#1B3A8C]">Keluar dari Admin?</h2>
                         <p className="mt-2 text-sm leading-6 text-gray-600">Sesi Anda akan diakhiri. Untuk membuka panel ini lagi, masuk kembali dengan akun admin.</p>
                         <div className="mt-6 flex gap-3">
-                            <button type="button" onClick={() => setConfirmOut(false)} className="h-11 flex-1 border-2 border-[#12233F] bg-white text-sm font-extrabold text-[#12233F] transition-colors hover:bg-white/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]">Batal</button>
-                            <button type="button" onClick={() => { session.clear(); nav('/admin/login', { replace: true }) }} className="h-11 flex-1 border-2 border-[#12233F] bg-red-700 text-sm font-extrabold text-white transition-colors hover:bg-red-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]">Keluar</button>
+                            <button type="button" onClick={() => setConfirmOut(false)} className="press-pixel press-pixel-sm h-11 flex-1 border-2 border-[#12233F] bg-white text-sm font-extrabold text-[#12233F] hover:bg-white/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]">Batal</button>
+                            <button type="button" onClick={() => { session.clear(); nav('/admin/login', { replace: true }) }} className="press-pixel press-pixel-sm h-11 flex-1 border-2 border-[#12233F] bg-red-700 text-sm font-extrabold text-white hover:bg-red-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]">Keluar</button>
                         </div>
                     </div>
                 </div>

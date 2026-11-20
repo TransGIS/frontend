@@ -45,22 +45,24 @@ function TransitLoaderScene() {
         <rect x="360" y="64" width="92" height="7" />
       </g>
 
-      <g stroke="#12233F" strokeWidth="3" strokeLinejoin="miter">
+      <g fill="#DDE5D6">
+        <path d="M0 198V170H18V158H36V144H54V128H72V114H90V128H108V142H126V156H144V170H162V198Z" />
+        <path d="M112 198V178H132V164H152V148H172V134H192V148H212V162H232V178H252V198Z" />
+        <path d="M388 198V174H408V158H428V140H448V122H468V138H488V154H508V170H528V198Z" />
+        <path d="M496 198V178H516V164H536V148H556V132H576V148H596V164H616V178H640V198Z" />
+      </g>
+      <g fill="#C3D0BA">
+        <path d="M0 198V184H28V172H56V160H84V172H112V184H140V198Z" />
+        <path d="M360 198V184H388V172H416V160H444V172H472V184H500V198Z" />
+      </g>
+
+      <g transform="translate(448 0)" stroke="#12233F" strokeWidth="3" strokeLinejoin="miter">
         <path d="M12 96H4V86H10V76H16V66H24V54H34V68H30V78H26V88H20V96Z" fill="#FFFFFF" />
         <path d="M14 96H28L34 178H8Z" fill="#FFFFFF" />
         <path d="M23 98H28L34 178H24Z" fill="#94A3B8" stroke="none" />
         <rect x="4" y="176" width="34" height="12" fill="#FFFFFF" />
         <rect x="0" y="188" width="42" height="10" fill="#94A3B8" />
         <rect x="8" y="180" width="26" height="4" fill="#F97316" stroke="none" />
-      </g>
-
-      <g fill="#16A34A">
-        <rect x="66" y="142" width="10" height="58" />
-        <rect x="52" y="128" width="38" height="14" />
-        <rect x="58" y="116" width="26" height="12" />
-        <rect x="592" y="158" width="8" height="42" />
-        <rect x="580" y="146" width="32" height="12" />
-        <rect x="586" y="136" width="20" height="10" />
       </g>
       <g fill="#12233F">
         <rect x="522" y="132" width="6" height="68" />
@@ -161,10 +163,7 @@ export default function Preloader({ onFinish }) {
     >
       <div className="transgis-preloader-content">
         <TransitLoaderScene />
-        <p className="mt-1 text-[10px] font-semibold tracking-[0.24em] text-[#12233F]/65 sm:text-xs">
-          TRANSPORTASI TERPADU BOGOR
-        </p>
-        <h1 className="font-pixel mt-2 text-6xl leading-none sm:text-7xl" aria-label="TransGIS">
+        <h1 className="font-pixel mt-5 text-6xl leading-none sm:text-7xl" aria-label="TransGIS">
           <span className="text-[#1B3A8C]">Trans</span><span className="text-[#F97316]">GIS</span>
         </h1>
         <div className="mt-6 flex items-center justify-center gap-2" aria-hidden="true">
@@ -174,7 +173,6 @@ export default function Preloader({ onFinish }) {
         </div>
         <p className="mt-4 text-sm text-[#12233F]/65 sm:text-base">Menyiapkan rute perjalananmu</p>
       </div>
-      <p className="transgis-preloader-footer">BisKita + angkot, satu peta perjalanan</p>
     </div>
   )
 }

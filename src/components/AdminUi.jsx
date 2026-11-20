@@ -94,7 +94,7 @@ export function Field({ label, icon, type = 'text', value, onChange, placeholder
 }
 
 export const PrimaryBtn = ({ children, ...p }) => (
-    <button {...p} className="flex h-12 w-full items-center justify-center gap-2 border-2 border-[#12233F] bg-[#1B3A8C] px-4 text-sm font-extrabold text-white shadow-[4px_4px_0_#F97316] transition-colors hover:bg-[#12233F] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] disabled:cursor-wait disabled:opacity-60">{children}</button>
+    <button {...p} className="press-pixel press-pixel-orange flex h-12 w-full items-center justify-center gap-2 border-2 border-[#12233F] bg-[#1B3A8C] px-4 text-sm font-extrabold text-white shadow-[4px_4px_0_#F97316] hover:bg-[#12233F] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] disabled:cursor-wait disabled:opacity-60">{children}</button>
 )
 
 /* Dropdown filter bergaya design system TransGIS (krem–tinta, border tegas,
@@ -131,7 +131,7 @@ export function FilterSelect({ label, value, options, onChange, icon = 'filter',
                 aria-haspopup="listbox"
                 aria-expanded={open}
                 aria-label={label}
-                className={`flex h-11 w-full items-center justify-between gap-3 border-2 px-3.5 text-xs font-extrabold text-[#12233F] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] disabled:cursor-wait disabled:opacity-60 ${open
+                className={`press-pixel press-pixel-sm press-pixel-orange flex h-11 w-full items-center justify-between gap-3 border-2 px-3.5 text-xs font-extrabold text-[#12233F] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] disabled:cursor-wait disabled:opacity-60 ${open
                     ? 'border-[#12233F] bg-[#F7F4EA] shadow-[3px_3px_0_#F97316]'
                     : 'border-[#12233F]/30 bg-white hover:border-[#12233F] hover:bg-[#F7F4EA]'
                     }`}

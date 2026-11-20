@@ -4,6 +4,7 @@ import PlaceInput from '../components/PlaceInput'
 import { PixelTransitScene, RoadMarker } from '../components/PixelRoad'
 import { mapsUrl, searchPlaces } from '../lib/geocode'
 import { trackPageView } from '../lib/routeData'
+import { scrollToTarget } from '../lib/scrollTo'
 import heroBg from '../../../hero-section.jpeg'
 
 // --- Color tokens (TransGIS brand) ---
@@ -52,7 +53,7 @@ function ProjectInfoSection() {
                         </p>
                         <a
                             href="/maps"
-                            className="mt-6 inline-flex items-center gap-2 border-2 border-[#12233F] bg-white px-5 py-3 text-sm font-bold text-[#1B3A8C] shadow-[4px_4px_0_#12233F] transition-colors hover:bg-[#F97316] hover:text-[#12233F] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1B3A8C] focus-visible:ring-offset-4"
+                            className="press-pixel mt-6 inline-flex items-center gap-2 border-2 border-[#12233F] bg-white px-5 py-3 text-sm font-bold text-[#1B3A8C] shadow-[4px_4px_0_#12233F] hover:bg-[#F97316] hover:text-[#12233F] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1B3A8C] focus-visible:ring-offset-4"
                         >
                             Rencanakan perjalanan
                             <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
@@ -102,7 +103,7 @@ function ProjectInfoSection() {
 }
 
 function HomePage() {
-    const [activeTab, setActiveTab] = useState('trayek') // 'petunjuk' | 'trayek'
+    const [activeTab, setActiveTab] = useState('petunjuk') // 'petunjuk' | 'trayek'
     const [activeMode, setActiveMode] = useState('biskita') // 'biskita' | 'angkot'
     const [tujuan, setTujuan] = useState('') // filter trayek (tab Trayek)
 
@@ -124,12 +125,12 @@ function HomePage() {
     useEffect(() => {
         if (!window.location.hash) return
         const t = setTimeout(() => {
-            document.getElementById(window.location.hash.slice(1))?.scrollIntoView({ behavior: 'smooth' })
+            scrollToTarget(document.getElementById(window.location.hash.slice(1)))
         }, 100)
         return () => clearTimeout(t)
     }, [])
 
-    const scrollToTarif = () => document.getElementById('tarif')?.scrollIntoView({ behavior: 'smooth' })
+    const scrollToTarif = () => scrollToTarget(document.getElementById('tarif'))
 
     // Petunjuk Arah: ubah teks → koordinat (bila belum memilih saran), lalu buka /maps
     const goDirections = async () => {
@@ -175,7 +176,7 @@ function HomePage() {
                 {/* Search Card */}
                 <div className="hero-search pixel-panel mt-8 w-full max-w-3xl bg-[#F7F4EA] p-4 text-left text-[#12233F] sm:p-6">
                     {/* Tab switcher */}
-                    <div className="grid grid-cols-2 border-2 border-[#12233F] bg-white" role="tablist" aria-label="Jenis pencarian">
+                    <div className="grid grid-cols-2 gap-2" role="tablist" aria-label="Jenis pencarian">
                         <button
                             type="button"
                             role="tab"
@@ -183,8 +184,8 @@ function HomePage() {
                             aria-selected={isPetunjuk}
                             aria-controls="home-search-panel"
                             onClick={() => setActiveTab('petunjuk')}
-                            className={`border-r-2 border-[#12233F] px-3 py-3 text-sm font-bold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#F97316] ${isPetunjuk
-                                ? 'bg-[#1B3A8C] text-white'
+                            className={`press-pixel press-pixel-xs press-pixel-orange border-2 border-[#12233F] px-3 py-3 text-sm font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#F97316] ${isPetunjuk
+                                ? 'bg-[#1B3A8C] text-white shadow-[2px_2px_0_#F97316]'
                                 : 'bg-white text-gray-600 hover:bg-[#EAF0FF] hover:text-[#1B3A8C]'
                                 }`}
                         >
@@ -197,8 +198,8 @@ function HomePage() {
                             aria-selected={isTrayek}
                             aria-controls="home-search-panel"
                             onClick={() => setActiveTab('trayek')}
-                            className={`px-3 py-3 text-sm font-bold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#F97316] ${isTrayek
-                                ? 'bg-[#1B3A8C] text-white'
+                            className={`press-pixel press-pixel-xs press-pixel-orange border-2 border-[#12233F] px-3 py-3 text-sm font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#F97316] ${isTrayek
+                                ? 'bg-[#1B3A8C] text-white shadow-[2px_2px_0_#F97316]'
                                 : 'bg-white text-gray-600 hover:bg-[#EAF0FF] hover:text-[#1B3A8C]'
                                 }`}
                         >
@@ -215,7 +216,7 @@ function HomePage() {
                                     type="button"
                                     aria-pressed={activeMode === 'biskita'}
                                     onClick={() => { setActiveMode('biskita'); setTujuan('') }}
-                                    className={`relative flex min-h-[68px] items-center justify-center gap-2 border-2 px-3 py-3 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] sm:justify-start sm:gap-3 ${activeMode === 'biskita'
+                                    className={`press-pixel press-pixel-sm press-pixel-orange relative flex min-h-[68px] items-center justify-center gap-2 border-2 px-3 py-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] sm:justify-start sm:gap-3 ${activeMode === 'biskita'
                                         ? 'border-[#12233F] bg-[#1B3A8C] text-white shadow-[3px_3px_0_#F97316]'
                                         : 'border-[#12233F]/25 bg-white text-gray-600 hover:border-[#1B3A8C] hover:text-[#1B3A8C]'
                                         }`}
@@ -238,7 +239,7 @@ function HomePage() {
                                     type="button"
                                     aria-pressed={activeMode === 'angkot'}
                                     onClick={() => { setActiveMode('angkot'); setTujuan('') }}
-                                    className={`relative flex min-h-[68px] items-center justify-center gap-2 border-2 px-3 py-3 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] sm:justify-start sm:gap-3 ${activeMode === 'angkot'
+                                    className={`press-pixel press-pixel-sm press-pixel-orange relative flex min-h-[68px] items-center justify-center gap-2 border-2 px-3 py-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] sm:justify-start sm:gap-3 ${activeMode === 'angkot'
                                         ? 'border-[#12233F] bg-[#1B3A8C] text-white shadow-[3px_3px_0_#F97316]'
                                         : 'border-[#12233F]/25 bg-white text-gray-600 hover:border-[#1B3A8C] hover:text-[#1B3A8C]'
                                         }`}
@@ -330,7 +331,7 @@ function HomePage() {
                                 type="button"
                                 onClick={isTrayek ? scrollToTarif : goDirections}
                                 disabled={searching}
-                                className="flex min-h-[50px] w-full items-center justify-center gap-2 border-2 border-[#12233F] bg-[#16A34A] px-6 py-3 text-sm font-extrabold text-white shadow-[3px_3px_0_#12233F] transition-colors hover:bg-[#15803D] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-70 sm:w-auto"
+                                className="press-pixel press-pixel-sm flex min-h-[50px] w-full items-center justify-center gap-2 border-2 border-[#12233F] bg-[#16A34A] px-6 py-3 text-sm font-extrabold text-white shadow-[3px_3px_0_#12233F] hover:bg-[#15803D] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-70 sm:w-auto"
                             >
                                 <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
                                     <circle cx="11" cy="11" r="7" />

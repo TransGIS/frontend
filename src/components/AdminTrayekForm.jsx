@@ -214,8 +214,8 @@ export default function AdminTrayekForm() {
                     <div className="border-2 border-[#12233F] bg-white p-4 shadow-[4px_4px_0_#12233F]">
                         <p className="text-xs leading-5 text-gray-500">Kode trayek dan titik awal wajib diisi. Periksa kembali jalur pada pratinjau sebelum menyimpan.</p>
                         <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:justify-end">
-                            <Link to={`/admin/trayek/${kind}`} className="inline-flex h-11 items-center justify-center border-2 border-[#12233F] bg-white px-6 text-sm font-extrabold text-[#12233F] transition-colors hover:bg-[#F7F4EA] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]">Batal</Link>
-                            <button type="submit" disabled={busy} className="inline-flex h-11 items-center justify-center gap-2 border-2 border-[#12233F] bg-[#1B3A8C] px-6 text-sm font-extrabold text-white shadow-[4px_4px_0_#F97316] transition-colors hover:bg-[#12233F] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] disabled:cursor-wait disabled:opacity-60">
+                            <Link to={`/admin/trayek/${kind}`} className="press-pixel press-pixel-sm inline-flex h-11 items-center justify-center border-2 border-[#12233F] bg-white px-6 text-sm font-extrabold text-[#12233F] hover:bg-[#F7F4EA] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]">Batal</Link>
+                            <button type="submit" disabled={busy} className="press-pixel press-pixel-orange inline-flex h-11 items-center justify-center gap-2 border-2 border-[#12233F] bg-[#1B3A8C] px-6 text-sm font-extrabold text-white shadow-[4px_4px_0_#F97316] hover:bg-[#12233F] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] disabled:cursor-wait disabled:opacity-60">
                                 <Icon name={edit ? 'edit' : 'plus'} />{busy ? 'Menyimpan…' : edit ? 'Simpan Perubahan' : 'Simpan Rute'}
                             </button>
                         </div>

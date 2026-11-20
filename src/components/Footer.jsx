@@ -49,7 +49,7 @@ function Footer() {
                     </p>
                     <a
                         href="/maps"
-                        className="mt-5 inline-flex items-center gap-3 border-2 border-[#F7F4EA] bg-[#F97316] px-5 py-3 text-sm font-extrabold text-[#12233F] shadow-[4px_4px_0_#F7F4EA] transition-colors hover:bg-[#F7F4EA] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] focus-visible:ring-offset-2 focus-visible:ring-offset-[#12233F]"
+                        className="press-pixel press-pixel-cream mt-5 inline-flex items-center gap-3 border-2 border-[#F7F4EA] bg-[#F97316] px-5 py-3 text-sm font-extrabold text-[#12233F] shadow-[4px_4px_0_#F7F4EA] hover:bg-[#F7F4EA] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] focus-visible:ring-offset-2 focus-visible:ring-offset-[#12233F]"
                     >
                         Buka peta perjalanan
                         <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">

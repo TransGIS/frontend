@@ -51,14 +51,14 @@ export default function CookieConsent() {
                         <button
                             type="button"
                             onClick={() => choose('rejected')}
-                            className="flex-1 border-2 border-[#12233F] bg-white px-3 py-2 text-xs font-extrabold text-[#12233F] shadow-[3px_3px_0_#12233F] transition hover:-translate-y-0.5 hover:bg-[#EFEAD9] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] active:translate-y-0 active:shadow-none"
+                            className="press-pixel press-pixel-sm flex-1 border-2 border-[#12233F] bg-white px-3 py-2 text-xs font-extrabold text-[#12233F] shadow-[3px_3px_0_#12233F] hover:bg-[#EFEAD9] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]"
                         >
                             Tolak
                         </button>
                         <button
                             type="button"
                             onClick={() => choose('accepted')}
-                            className="flex-1 border-2 border-[#12233F] bg-[#F97316] px-3 py-2 text-xs font-extrabold text-[#12233F] shadow-[3px_3px_0_#12233F] transition hover:-translate-y-0.5 hover:brightness-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1B3A8C] active:translate-y-0 active:shadow-none"
+                            className="press-pixel press-pixel-sm flex-1 border-2 border-[#12233F] bg-[#F97316] px-3 py-2 text-xs font-extrabold text-[#12233F] shadow-[3px_3px_0_#12233F] hover:brightness-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1B3A8C]"
                         >
                             Terima
                         </button>

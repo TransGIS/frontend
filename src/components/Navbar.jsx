@@ -59,18 +59,16 @@ function Navbar() {
                             key={href}
                             href={href}
                             aria-current={active ? 'page' : undefined}
-                            className={`group relative px-3 py-2 text-sm font-semibold transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] ${active
-                                ? 'text-[#F97316] hover:bg-[#F97316]/10'
+                            className={`press-pixel press-pixel-held press-pixel-xs group relative border-2 px-3 py-1.5 text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] ${active
+                                ? solid
+                                    ? 'border-[#12233F] bg-[#F97316]/15 text-[#F97316] hover:bg-[#F97316]/25'
+                                    : 'border-white/60 bg-white/10 text-[#F97316] hover:bg-white/20'
                                 : solid
-                                    ? 'text-[#12233F] hover:bg-[#12233F]/5 hover:text-[#1B3A8C]'
-                                    : 'text-white [text-shadow:0_1px_8px_rgba(18,35,63,0.9)] hover:bg-white/15'
+                                    ? 'border-transparent text-[#12233F] hover:border-[#12233F] hover:bg-white hover:text-[#1B3A8C]'
+                                    : 'border-transparent text-white [text-shadow:0_1px_8px_rgba(18,35,63,0.9)] hover:border-white/70 hover:bg-white/10'
                                 }`}
                         >
                             {label}
-                            <span
-                                aria-hidden="true"
-                                className={`pointer-events-none absolute inset-x-3 bottom-0 h-[2px] origin-left bg-[#F97316] transition-transform duration-300 ease-out ${active ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'}`}
-                            />
                         </a>
                     ))}
                 </nav>
@@ -78,7 +76,7 @@ function Navbar() {
                 <button
                     type="button"
                     onClick={() => setIsOpen(!isOpen)}
-                    className={`border-2 p-2 transition-colors md:hidden ${solid
+                    className={`press-pixel press-pixel-held press-pixel-xs border-2 p-2 md:hidden ${solid
                         ? 'border-[#12233F] text-[#12233F] hover:bg-gray-100'
                         : 'border-white text-white hover:bg-white/10'
                         }`}
@@ -105,7 +103,7 @@ function Navbar() {
                             key={href}
                             href={href}
                             onClick={() => setIsOpen(false)}
-                            className={`block border-l-4 px-3 py-2.5 text-sm font-semibold transition-colors ${active
+                            className={`press-pixel press-pixel-held press-pixel-xs block border-l-4 px-3 py-2.5 text-sm font-semibold ${active
                                 ? 'border-[#F97316] bg-orange-50 text-[#F97316]'
                                 : 'border-transparent text-[#12233F] hover:border-[#1B3A8C] hover:bg-gray-50'
                                 }`}

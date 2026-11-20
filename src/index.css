@@ -121,18 +121,6 @@
   height: auto;
 }
 
-.transgis-preloader-footer {
-  position: absolute;
-  right: 1.5rem;
-  bottom: max(1.5rem, env(safe-area-inset-bottom));
-  left: 1.5rem;
-  text-align: center;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.16em;
-  color: rgb(18 35 63 / 0.55);
-}
-
 .transgis-loader-dot {
   width: 10px;
   height: 10px;
@@ -177,7 +165,6 @@
 @media (max-height: 540px) {
   .transgis-preloader-scene { width: min(52vw, 20rem); }
   .transgis-preloader-content { padding-top: 1rem; padding-bottom: 1rem; }
-  .transgis-preloader-footer { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -198,4 +185,70 @@
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* Interaksi tombol design system: kotak bertinta terangkat saat hover,
+   lalu "tenggelam" ke bayangannya sendiri saat ditekan. */
+.press-pixel {
+  --press-x: 4px;
+  --press-shadow: #12233F;
+  transition:
+    transform 120ms ease-out,
+    box-shadow 120ms ease-out,
+    background-color 150ms ease-out,
+    color 150ms ease-out,
+    border-color 150ms ease-out;
+}
+
+.press-pixel:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: calc(var(--press-x) + 1px) calc(var(--press-x) + 1px) 0 var(--press-shadow);
+}
+
+.press-pixel:active {
+  transform: translate(var(--press-x), var(--press-x));
+  box-shadow: 0 0 0 var(--press-shadow);
+}
+
+/* Varian navbar: bayangan tetap terlihat saat tombol ditekan,
+   hanya menyusut jadi 1px agar tetap terasa "masuk" ke halaman. */
+.press-pixel-held:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 var(--press-shadow);
+}
+
+.press-pixel:disabled,
+.press-pixel:disabled:hover,
+.press-pixel:disabled:active {
+  transform: none;
+  box-shadow: none;
+}
+
+.press-pixel-sm { --press-x: 3px; }
+.press-pixel-xs { --press-x: 2px; }
+.press-pixel-orange { --press-shadow: #F97316; }
+.press-pixel-cream { --press-shadow: #F7F4EA; }
+
+@media (prefers-reduced-motion: reduce) {
+  .press-pixel,
+  .press-pixel:hover,
+  .press-pixel:active {
+    transform: none;
+  }
+}
+
+/* Lenis: smooth scroll. Kelas "lenis" menempel di <html> saat instance aktif.
+   scroll-behavior dipaksa "auto" supaya tidak ada dua kali smoothing
+   (Lenis + scroll-smooth bawaan index.html). */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+html.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+html.lenis.lenis-stopped {
+  overflow: hidden;
 }

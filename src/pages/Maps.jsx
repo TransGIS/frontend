@@ -5,6 +5,7 @@ import { buildGraph, planTrips, topPlans, MAX_WALK_KM, dist } from '../lib/routi
 import { loadRoutes, trackPageView, fetchWalkRoute } from '../lib/routeData'
 import { readOD, searchPlaces } from '../lib/geocode'
 import PlaceInput from '../components/PlaceInput'
+import RouteStopModal from '../components/RouteStopModal'
 
 /* ────────────────────────────────────────────────────────────
    Konfigurasi
@@ -12,6 +13,8 @@ import PlaceInput from '../components/PlaceInput'
    Geometri jarak & dijkstra ada di src/lib/routing.js
    ──────────────────────────────────────────────────────────── */
 const CENTER = [-6.5971, 106.806]
+// Selaras dengan VIEWBOX pencarian: mencakup Kota & Kabupaten Bogor.
+const BOGOR_BOUNDS = L.latLngBounds([[-6.80, 106.60], [-6.40, 107.00]])
 const CHIP_COLOR = { biskita: '#F97316', angkot: '#0D9F6E' }
 
 // Kunci geometri jalan kaki = pasangan titik ujung segmen (bukan sig rute),
@@ -72,7 +75,7 @@ function RouteCard({ route, onClick }) {
         <button
             type="button"
             onClick={onClick}
-            className="group w-full border-2 border-[#12233F] bg-white p-4 text-left shadow-[3px_3px_0_#12233F] transition-[transform,box-shadow] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0_#12233F] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]"
+            className="press-pixel press-pixel-sm group w-full border-2 border-[#12233F] bg-white p-4 text-left shadow-[3px_3px_0_#12233F] hover:bg-[#FDFBF3] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]"
         >
             <div className="flex items-start gap-3">
                 <Badge route={route} />
@@ -172,7 +175,7 @@ function RouteDetail({ route, onBack }) {
     )
 }
 
-function PlanChips({ plan }) {
+function PlanChips({ plan, onOpenRoute }) {
     const walk = (m, key) => (
         <span key={key} className="inline-flex items-center gap-1 border border-[#12233F]/20 bg-[#F7F4EA] px-2 py-1 text-xs font-bold text-[#12233F]">
             <Icon name="walk" className="h-3.5 w-3.5 text-[#1B3A8C]" />{Math.max(1, Math.round(m))}&apos;
@@ -182,10 +185,26 @@ function PlanChips({ plan }) {
     const out = []
     plan.legs.forEach((l, i) => {
         if (i === 0 || l.walk.min >= 1) out.push(walk(l.walk.min, `w${i}`), sep(`a${i}`))
+        const chipClass = 'inline-flex items-center gap-1 border border-[#12233F] px-2 py-1 text-xs font-extrabold text-white'
+        const chipStyle = { background: CHIP_COLOR[l.route.kind] }
+        const chipInner = <>
+            <Icon name={l.route.kind === 'biskita' ? 'bus' : 'car'} className="h-3.5 w-3.5" />{l.route.ref} {l.route.kind === 'biskita' ? 'BisKita' : 'Angkot'}
+        </>
         out.push(
-            <span key={`c${i}`} className="inline-flex items-center gap-1 border border-[#12233F] px-2 py-1 text-xs font-extrabold text-white" style={{ background: CHIP_COLOR[l.route.kind] }}>
-                <Icon name={l.route.kind === 'biskita' ? 'bus' : 'car'} className="h-3.5 w-3.5" />{l.route.ref} {l.route.kind === 'biskita' ? 'BisKita' : 'Angkot'}
-            </span>,
+            onOpenRoute ? (
+                <button
+                    key={`c${i}`}
+                    type="button"
+                    onClick={() => onOpenRoute(l.route)}
+                    aria-label={`Lihat jalur dan halte ${l.route.ref}`}
+                    className={`press-pixel press-pixel-xs ${chipClass} hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]`}
+                    style={chipStyle}
+                >
+                    {chipInner}
+                </button>
+            ) : (
+                <span key={`c${i}`} className={chipClass} style={chipStyle}>{chipInner}</span>
+            ),
             sep(`b${i}`),
         )
     })
@@ -205,7 +224,7 @@ function PlanSummary({ plan }) {
     )
 }
 
-function PlanDetail({ plan, onBack }) {
+function PlanDetail({ plan, onBack, onOpenRoute }) {
     const steps = []
     plan.legs.forEach((l, i) => {
         const r = l.route
@@ -221,6 +240,7 @@ function PlanDetail({ plan, onBack }) {
             chip: r.ref, title: `Arah ${l.reversed ? r.from : (l.part.dir || r.to || r.from)}`,
             sub: `${l.alightStop ? `Turun di halte ${l.alightStop} • ` : ''}Perjalanan ~${fmtKm(l.km)} • ${Math.round(l.rideMin)} mnt • Tarif ${r.fare}`,
             time: hhmm(l.boardAt),
+            route: r,
         })
     })
     const lastStop = plan.legs[plan.legs.length - 1].alightStop
@@ -235,7 +255,7 @@ function PlanDetail({ plan, onBack }) {
             <BackButton onClick={onBack} />
             <div className="border-2 border-[#12233F] bg-white p-4 shadow-[4px_4px_0_#12233F]">
                 <PlanSummary plan={plan} />
-                <div className="mb-3 mt-4"><PlanChips plan={plan} /></div>
+                <div className="mb-3 mt-4"><PlanChips plan={plan} onOpenRoute={onOpenRoute} /></div>
                 <p className="border-t-2 border-[#12233F]/10 pt-3 text-xs font-semibold text-gray-600">Total tarif <span className="font-extrabold text-[#12233F]">~{fmtFare(plan.fare)}</span></p>
             </div>
             <ol className="relative mt-6">
@@ -251,10 +271,32 @@ function PlanDetail({ plan, onBack }) {
                                 <span className="shrink-0 border border-[#12233F]/20 bg-white px-2 py-0.5 text-[11px] font-bold text-[#12233F]">{s.time}</span>
                             </div>
                             <p className="mt-1.5 text-sm font-bold leading-relaxed text-[#12233F]">
-                                {s.chip && <span className="mr-1.5 inline-block border border-[#12233F] px-1.5 py-0.5 text-[11px] font-extrabold text-white" style={{ background: s.color }}>{s.chip}</span>}
+                                {s.chip && (s.route && onOpenRoute ? (
+                                    <button
+                                        type="button"
+                                        onClick={() => onOpenRoute(s.route)}
+                                        aria-label={`Lihat jalur dan halte ${s.route.ref}`}
+                                        className="press-pixel press-pixel-xs mr-1.5 inline-block border border-[#12233F] px-1.5 py-0.5 text-[11px] font-extrabold text-white hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]"
+                                        style={{ background: s.color }}
+                                    >
+                                        {s.chip}
+                                    </button>
+                                ) : (
+                                    <span className="mr-1.5 inline-block border border-[#12233F] px-1.5 py-0.5 text-[11px] font-extrabold text-white" style={{ background: s.color }}>{s.chip}</span>
+                                ))}
                                 {s.title}
                             </p>
                             <p className="mt-1 text-xs leading-relaxed text-gray-500">{s.sub}</p>
+                            {s.route && onOpenRoute && (
+                                <button
+                                    type="button"
+                                    onClick={() => onOpenRoute(s.route)}
+                                    aria-label={`Lihat jalur dan halte ${s.route.ref}`}
+                                    className="mt-2 inline-flex items-center gap-1 text-[11px] font-extrabold text-[#1B3A8C] transition-colors hover:text-[#F97316] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]"
+                                >
+                                    Lihat jalur &amp; halte <span aria-hidden="true">›</span>
+                                </button>
+                            )}
                         </div>
                     </li>
                 ))}
@@ -378,6 +420,7 @@ function Maps() {
     const [selectedId, setSelectedId] = useState(null)
     const [panelOpen, setPanelOpen] = useState(true)
     const [legendOpen, setLegendOpen] = useState(false)
+    const [detailRoute, setDetailRoute] = useState(null) // rute untuk modal "Jalur & halte"
 
     const [asal, setAsal] = useState(init?.asal ?? null)
     const [tujuan, setTujuan] = useState(init?.tujuan ?? null)
@@ -446,12 +489,13 @@ function Maps() {
     useEffect(() => {
         const onKeyDown = (e) => {
             if (e.key !== 'Escape') return
-            if (legendOpen) setLegendOpen(false)
+            if (detailRoute) setDetailRoute(null)
+            else if (legendOpen) setLegendOpen(false)
             else setPanelOpen(false)
         }
         window.addEventListener('keydown', onKeyDown)
         return () => window.removeEventListener('keydown', onKeyDown)
-    }, [legendOpen])
+    }, [detailRoute, legendOpen])
 
     // Petunjuk Arah memakai BisKita + angkot sekaligus supaya bisa transit antar moda.
     // Tab Trayek tetap per moda sesuai pilihan.
@@ -501,7 +545,22 @@ function Maps() {
 
     /* ── Inisialisasi peta (sekali) ── */
     useEffect(() => {
-        const m = L.map(mapEl.current, { center: CENTER, zoom: 12, zoomControl: false, preferCanvas: true })
+        const m = L.map(mapEl.current, {
+            center: CENTER,
+            zoom: 12,
+            minZoom: 10,
+            maxBounds: BOGOR_BOUNDS,
+            maxBoundsViscosity: 1.0,
+            zoomControl: false,
+            preferCanvas: true,
+        })
+        const limitZoomToBogor = () => {
+            const minZoom = m.getBoundsZoom(BOGOR_BOUNDS, true)
+            m.options.minZoom = minZoom
+            if (m.getZoom() < minZoom) m.setZoom(minZoom)
+        }
+        limitZoomToBogor()
+        m.on('resize', limitZoomToBogor)
         L.control.zoom({ position: 'topright' }).addTo(m)
         L.tileLayer(
             'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
@@ -699,14 +758,14 @@ function Maps() {
                                 type="button"
                                 onClick={() => setPanelOpen(false)}
                                 aria-label="Tutup sidebar"
-                                className="border-2 border-[#12233F] bg-white p-2 text-[#12233F] transition-colors hover:bg-[#F97316] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] lg:hidden"
+                                className="press-pixel press-pixel-xs border-2 border-[#12233F] bg-white p-2 text-[#12233F] hover:bg-[#F97316] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] lg:hidden"
                             >
                                 <Icon name="close" className="h-4 w-4" />
                             </button>
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 border-2 border-[#12233F] bg-white" role="tablist" aria-label="Jenis pencarian peta">
+                    <div className="grid grid-cols-2 gap-2" role="tablist" aria-label="Jenis pencarian peta">
                         {[['petunjuk', 'Petunjuk Arah'], ['trayek', 'Cari Trayek']].map(([k, l]) => (
                             <button
                                 key={k}
@@ -716,7 +775,7 @@ function Maps() {
                                 aria-selected={tab === k}
                                 aria-controls="maps-content"
                                 onClick={() => switchTab(k)}
-                                className={`min-h-11 px-3 py-2.5 text-sm font-extrabold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#F97316] ${k === 'petunjuk' ? 'border-r-2 border-[#12233F]' : ''} ${tab === k ? 'bg-[#1B3A8C] text-white' : 'bg-white text-gray-600 hover:bg-[#EAF0FF] hover:text-[#1B3A8C]'}`}
+                                className={`press-pixel press-pixel-xs press-pixel-orange min-h-11 border-2 border-[#12233F] px-3 py-2.5 text-sm font-extrabold focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#F97316] ${tab === k ? 'bg-[#1B3A8C] text-white shadow-[2px_2px_0_#F97316]' : 'bg-white text-gray-600 hover:bg-[#EAF0FF] hover:text-[#1B3A8C]'}`}
                             >
                                 {l}
                             </button>
@@ -731,7 +790,7 @@ function Maps() {
                                     type="button"
                                     aria-pressed={mode === k}
                                     onClick={() => switchMode(k)}
-                                    className={`flex min-h-11 items-center justify-center gap-2 border-2 px-3 py-2.5 text-sm font-extrabold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] ${mode === k ? 'border-[#12233F] bg-[#1B3A8C] text-white shadow-[3px_3px_0_#F97316]' : 'border-[#12233F]/25 bg-white text-gray-600 hover:border-[#1B3A8C] hover:text-[#1B3A8C]'}`}
+                                    className={`press-pixel press-pixel-sm press-pixel-orange flex min-h-11 items-center justify-center gap-2 border-2 px-3 py-2.5 text-sm font-extrabold focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] ${mode === k ? 'border-[#12233F] bg-[#1B3A8C] text-white shadow-[3px_3px_0_#F97316]' : 'border-[#12233F]/25 bg-white text-gray-600 hover:border-[#1B3A8C] hover:text-[#1B3A8C]'}`}
                                 >
                                     <Icon name={ic} className="h-5 w-5 shrink-0" />{l}
                                 </button>
@@ -790,7 +849,7 @@ function Maps() {
 
                     {status === 'ready' && tab === 'petunjuk' && (
                         plan ? (
-                            <PlanDetail plan={plan} onBack={() => setPlanIdx(null)} />
+                            <PlanDetail plan={plan} onBack={() => setPlanIdx(null)} onOpenRoute={setDetailRoute} />
                         ) : (
                             <>
                                 <div className="border-2 border-[#12233F] bg-white p-4 shadow-[4px_4px_0_#12233F]">
@@ -829,7 +888,7 @@ function Maps() {
                                         <button
                                             type="button"
                                             onClick={useMyLocation}
-                                            className="flex min-h-11 items-center justify-center gap-2 border-2 border-[#12233F] bg-[#F7F4EA] px-3 py-2.5 text-xs font-extrabold text-[#1B3A8C] transition-colors hover:bg-[#EAF0FF] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] sm:col-span-2 lg:col-span-1"
+                                            className="press-pixel press-pixel-sm flex min-h-11 items-center justify-center gap-2 border-2 border-[#12233F] bg-[#F7F4EA] px-3 py-2.5 text-xs font-extrabold text-[#1B3A8C] hover:bg-[#EAF0FF] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] sm:col-span-2 lg:col-span-1"
                                         >
                                             <span className="text-[#F97316]"><Icon name="locate" /></span>Gunakan lokasi saya sebagai asal
                                         </button>
@@ -857,7 +916,7 @@ function Maps() {
                                                     key={p.sig}
                                                     type="button"
                                                     onClick={() => setPlanIdx(i)}
-                                                    className="w-full border-2 border-[#12233F] bg-white p-4 text-left shadow-[3px_3px_0_#12233F] transition-[transform,box-shadow] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0_#12233F] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]"
+                                                    className="press-pixel press-pixel-sm w-full border-2 border-[#12233F] bg-white p-4 text-left shadow-[3px_3px_0_#12233F] hover:bg-[#FDFBF3] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]"
                                                 >
                                                     {p.tag && (
                                                         <span className="mb-2 inline-flex items-center gap-1 border-2 border-[#12233F] bg-[#F97316] px-2.5 py-1 text-[10px] font-extrabold text-[#12233F]">
@@ -890,7 +949,7 @@ function Maps() {
                         onClick={() => setPanelOpen(true)}
                         aria-expanded={panelOpen}
                         aria-controls="maps-sidebar"
-                        className="absolute left-3 top-3 z-[1100] flex min-h-11 items-center gap-2 border-2 border-[#12233F] bg-[#F7F4EA] px-3 py-2.5 text-xs font-extrabold text-[#1B3A8C] shadow-[3px_3px_0_#12233F] transition-colors hover:bg-[#EAF0FF] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] lg:hidden"
+                        className="press-pixel press-pixel-sm absolute left-3 top-3 z-[1100] flex min-h-11 items-center gap-2 border-2 border-[#12233F] bg-[#F7F4EA] px-3 py-2.5 text-xs font-extrabold text-[#1B3A8C] shadow-[3px_3px_0_#12233F] hover:bg-[#EAF0FF] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] lg:hidden"
                     >
                         <Icon name="sliders" className="h-4 w-4 text-[#F97316]" />Buka panel rute
                     </button>
@@ -917,7 +976,7 @@ function Maps() {
                                     aria-haspopup="dialog"
                                     aria-expanded={legendOpen}
                                     aria-controls="maps-legend-dialog"
-                                    className="border border-[#12233F]/25 bg-white px-2 py-0.5 font-extrabold text-[#1B3A8C] transition-colors hover:border-[#F97316] hover:bg-[#F97316] hover:text-[#12233F] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]"
+                                    className="press-pixel press-pixel-xs border border-[#12233F]/25 bg-white px-2 py-0.5 font-extrabold text-[#1B3A8C] hover:border-[#F97316] hover:bg-[#F97316] hover:text-[#12233F] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]"
                                 >
                                     +{routes.length - legend.length} lainnya
                                 </button>
@@ -954,7 +1013,7 @@ function Maps() {
                                 autoFocus
                                 onClick={() => setLegendOpen(false)}
                                 aria-label="Tutup legenda"
-                                className="shrink-0 border-2 border-[#12233F] bg-white p-2 text-[#12233F] transition-colors hover:bg-[#F97316] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]"
+                                className="press-pixel press-pixel-xs shrink-0 border-2 border-[#12233F] bg-white p-2 text-[#12233F] hover:bg-[#F97316] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]"
                             >
                                 <Icon name="close" className="h-4 w-4" />
                             </button>
@@ -976,6 +1035,8 @@ function Maps() {
                     </div>
                 </div>
             )}
+
+            {detailRoute && <RouteStopModal route={detailRoute} onClose={() => setDetailRoute(null)} />}
         </section>
     )
 }

@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import HomePage from './pages/HomePage'
 import Navbar from './components/Navbar'
@@ -42,6 +42,32 @@ function Shell() {
   )
 }
 
+// Smooth scroll (Lenis) hanya untuk halaman yang menggulir dokumen.
+// /maps tidak boleh ikut: wheel event di sana dipakai Leaflet untuk zoom/pan.
+function SmoothScroll({ ready }) {
+  const { pathname } = useLocation()
+  useEffect(() => {
+    if (!ready) return undefined
+    if (pathname !== '/') return undefined
+    let mod = null
+    let disposed = false
+    // Impor dinamis: aplikasi tetap jalan dengan scroll native bila paket
+    // lenis belum terpasang.
+    import('./lib/smoothScroll')
+      .then((m) => {
+        if (disposed) return
+        mod = m
+        m.initSmoothScroll()
+      })
+      .catch(() => { /* lenis belum terpasang: pakai scroll bawaan browser */ })
+    return () => {
+      disposed = true
+      mod?.destroySmoothScroll()
+    }
+  }, [pathname, ready])
+  return null
+}
+
 export default function App() {
   const [showPreloader, setShowPreloader] = useState(shouldShowPreloader)
   const finishPreloader = useCallback(() => {
@@ -52,6 +78,7 @@ export default function App() {
   return (
     <Router>
       {showPreloader && <Preloader onFinish={finishPreloader} />}
+      {!showPreloader && <SmoothScroll ready />}
       <Shell />
     </Router>
   )

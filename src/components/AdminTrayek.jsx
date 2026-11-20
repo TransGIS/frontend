@@ -69,7 +69,7 @@ export default function AdminTrayek() {
                     <h1 className="max-w-3xl font-pixel text-4xl font-semibold leading-[1.05] text-[#1B3A8C] sm:text-5xl">Manajemen {title}</h1>
                     <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-600">Kelola data {KIND[k][1]}, rute operasional, titik halte, jadwal, dan armada Kota Bogor.</p>
                 </div>
-                <Link to={`/admin/trayek/${k}/baru`} className="inline-flex h-11 w-full items-center justify-center gap-2 border-2 border-[#12233F] bg-[#1B3A8C] px-4 text-xs font-extrabold text-white shadow-[4px_4px_0_#F97316] transition-colors hover:bg-[#12233F] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] sm:w-auto"><Icon name="plus" />Tambah Rute / Halte</Link>
+                <Link to={`/admin/trayek/${k}/baru`} className="press-pixel press-pixel-orange inline-flex h-11 w-full items-center justify-center gap-2 border-2 border-[#12233F] bg-[#1B3A8C] px-4 text-xs font-extrabold text-white shadow-[4px_4px_0_#F97316] hover:bg-[#12233F] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] sm:w-auto"><Icon name="plus" />Tambah Rute / Halte</Link>
             </div>
 
             <div className="mt-7 border-2 border-[#12233F] bg-white shadow-[4px_4px_0_#12233F]">
@@ -83,11 +83,11 @@ export default function AdminTrayek() {
                         <FilterSelect label="Status trayek" value={status} options={STATUS_OPTIONS} onChange={(v) => { setStatus(v); setPage(1) }} className="sm:w-44" />
                         <FilterSelect label="Urutkan" icon="sort" value={sort} options={SORT_OPTIONS} onChange={(v) => { setSort(v); setPage(1) }} className="sm:w-48" align="right" />
                         {dirty && (
-                            <button type="button" onClick={resetFilters} className="inline-flex h-11 items-center justify-center gap-2 border-2 border-[#12233F]/30 bg-white px-3.5 text-xs font-extrabold text-[#12233F] transition-colors hover:border-[#12233F] hover:bg-[#F7F4EA] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]">
+                            <button type="button" onClick={resetFilters} className="press-pixel press-pixel-xs inline-flex h-11 items-center justify-center gap-2 border-2 border-[#12233F]/30 bg-white px-3.5 text-xs font-extrabold text-[#12233F] hover:border-[#12233F] hover:bg-[#F7F4EA] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]">
                                 <Icon name="close" className="h-3.5 w-3.5 text-[#F97316]" />Reset
                             </button>
                         )}
-                        <button type="button" onClick={load} aria-label="Muat ulang data trayek" title="Muat ulang" className="grid aspect-square h-11 w-11 place-items-center border-2 border-[#12233F]/30 bg-white text-[#12233F] transition-colors hover:border-[#12233F] hover:bg-[#F7F4EA] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]"><Icon name="refresh" /></button>
+                        <button type="button" onClick={load} aria-label="Muat ulang data trayek" title="Muat ulang" className="press-pixel press-pixel-xs grid aspect-square h-11 w-11 place-items-center border-2 border-[#12233F]/30 bg-white text-[#12233F] hover:border-[#12233F] hover:bg-[#F7F4EA] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]"><Icon name="refresh" /></button>
                     </div>
                 </div>
                 {dirty && (
@@ -112,9 +112,9 @@ export default function AdminTrayek() {
                                         <td className="text-center"><span className="inline-block whitespace-nowrap border border-[#12233F]/20 bg-[#F7F4EA] px-2 py-1 text-xs font-bold text-[#12233F]">{r.estimasi}</span></td>
                                         <td className="whitespace-nowrap text-sm font-extrabold text-[#12233F]">{r.tarif}</td>
                                         <td className="pr-6"><div className="flex justify-center gap-2">
-                                            <button type="button" onClick={() => setMapRow(r)} aria-label={`Lihat peta ${r.kode}`} title={`Lihat peta ${r.kode}`} className="grid h-9 w-9 place-items-center border-2 border-[#12233F]/20 text-[#1B3A8C] transition-colors hover:border-[#12233F] hover:bg-[#EAF0FF] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]"><Icon name="map" className="h-[18px] w-[18px]" /></button>
-                                            <Link to={`/admin/trayek/${k}/${encodeURIComponent(r.id)}/ubah`} aria-label={`Ubah ${r.kode}`} title={`Ubah ${r.kode}`} className="grid h-9 w-9 place-items-center border-2 border-[#12233F]/20 text-gray-600 transition-colors hover:border-[#12233F] hover:bg-white hover:text-[#12233F] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]"><Icon name="edit" className="h-[18px] w-[18px]" /></Link>
-                                            <button type="button" onClick={() => setToDelete(r)} aria-label={`Hapus ${r.kode}`} title={`Hapus ${r.kode}`} className="grid h-9 w-9 place-items-center border-2 border-red-200 text-red-600 transition-colors hover:border-red-700 hover:bg-red-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]"><Icon name="trash" className="h-[18px] w-[18px]" /></button>
+                                            <button type="button" onClick={() => setMapRow(r)} aria-label={`Lihat peta ${r.kode}`} title={`Lihat peta ${r.kode}`} className="press-pixel press-pixel-xs grid h-9 w-9 place-items-center border-2 border-[#12233F]/20 text-[#1B3A8C] hover:border-[#12233F] hover:bg-[#EAF0FF] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]"><Icon name="map" className="h-[18px] w-[18px]" /></button>
+                                            <Link to={`/admin/trayek/${k}/${encodeURIComponent(r.id)}/ubah`} aria-label={`Ubah ${r.kode}`} title={`Ubah ${r.kode}`} className="press-pixel press-pixel-xs grid h-9 w-9 place-items-center border-2 border-[#12233F]/20 text-gray-600 hover:border-[#12233F] hover:bg-white hover:text-[#12233F] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]"><Icon name="edit" className="h-[18px] w-[18px]" /></Link>
+                                            <button type="button" onClick={() => setToDelete(r)} aria-label={`Hapus ${r.kode}`} title={`Hapus ${r.kode}`} className="press-pixel press-pixel-xs grid h-9 w-9 place-items-center border-2 border-red-200 text-red-600 hover:border-red-700 hover:bg-red-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]"><Icon name="trash" className="h-[18px] w-[18px]" /></button>
                                         </div></td>
                                     </tr>
                                 ))}
@@ -122,7 +122,7 @@ export default function AdminTrayek() {
                                     <tr>
                                         <td colSpan={6} className="p-8 text-center">
                                             <p className="text-sm text-gray-500">Tidak ada {KIND[k][1]} yang cocok dengan filter ini.</p>
-                                            {dirty && <button type="button" onClick={resetFilters} className="mt-3 inline-flex h-9 items-center justify-center gap-2 border-2 border-[#12233F] bg-white px-3 text-xs font-extrabold text-[#12233F] transition-colors hover:bg-[#F7F4EA] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]"><Icon name="refresh" className="h-3.5 w-3.5" />Atur ulang filter</button>}
+                                            {dirty && <button type="button" onClick={resetFilters} className="press-pixel press-pixel-xs mt-3 inline-flex h-9 items-center justify-center gap-2 border-2 border-[#12233F] bg-white px-3 text-xs font-extrabold text-[#12233F] hover:bg-[#F7F4EA] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]"><Icon name="refresh" className="h-3.5 w-3.5" />Atur ulang filter</button>}
                                         </td>
                                     </tr>
                                 )}
@@ -134,11 +134,11 @@ export default function AdminTrayek() {
                     <div className="flex flex-wrap items-center justify-between gap-3 border-t-2 border-[#12233F] bg-[#F7F4EA] px-5 py-4 text-xs text-gray-600">
                         <p>Menampilkan <b className="text-[#12233F]">{list.length ? (cur - 1) * PER + 1 : 0}–{(cur - 1) * PER + vis.length}</b> dari <b className="text-[#12233F]">{list.length}</b> {KIND[k][2]}</p>
                         <div className="flex flex-wrap gap-1.5">
-                            <button type="button" disabled={cur === 1} onClick={() => setPage(cur - 1)} className="h-9 border-2 border-[#12233F]/20 bg-white px-3 font-bold transition-colors hover:border-[#12233F] disabled:cursor-not-allowed disabled:text-gray-300">Sebelumnya</button>
+                            <button type="button" disabled={cur === 1} onClick={() => setPage(cur - 1)} className="press-pixel press-pixel-xs h-9 border-2 border-[#12233F]/20 bg-white px-3 font-bold hover:border-[#12233F] disabled:cursor-not-allowed disabled:text-gray-300">Sebelumnya</button>
                             {Array.from({ length: pages }, (_, i) => i + 1).map((n) => (
-                                <button key={n} type="button" onClick={() => setPage(n)} aria-label={`Halaman ${n}`} aria-current={n === cur ? 'page' : undefined} className={`h-9 w-9 border-2 font-extrabold ${n === cur ? 'border-[#12233F] bg-[#1B3A8C] text-white shadow-[2px_2px_0_#F97316]' : 'border-[#12233F]/20 bg-white text-[#12233F] hover:border-[#12233F]'}`}>{n}</button>
+                                <button key={n} type="button" onClick={() => setPage(n)} aria-label={`Halaman ${n}`} aria-current={n === cur ? 'page' : undefined} className={`press-pixel press-pixel-xs press-pixel-orange h-9 w-9 border-2 font-extrabold ${n === cur ? 'border-[#12233F] bg-[#1B3A8C] text-white shadow-[2px_2px_0_#F97316]' : 'border-[#12233F]/20 bg-white text-[#12233F] hover:border-[#12233F]'}`}>{n}</button>
                             ))}
-                            <button type="button" disabled={cur === pages} onClick={() => setPage(cur + 1)} className="h-9 border-2 border-[#12233F]/20 bg-white px-3 font-bold transition-colors hover:border-[#12233F] disabled:cursor-not-allowed disabled:text-gray-300">Selanjutnya</button>
+                            <button type="button" disabled={cur === pages} onClick={() => setPage(cur + 1)} className="press-pixel press-pixel-xs h-9 border-2 border-[#12233F]/20 bg-white px-3 font-bold hover:border-[#12233F] disabled:cursor-not-allowed disabled:text-gray-300">Selanjutnya</button>
                         </div>
                     </div>
                 )}
@@ -153,8 +153,8 @@ export default function AdminTrayek() {
                         <h2 id="delete-route-title" className="mt-4 font-pixel text-3xl font-semibold text-[#1B3A8C]">Hapus trayek {toDelete.kode}?</h2>
                         <p className="mt-2 text-sm leading-6 text-gray-600">{toDelete.from}{toDelete.to && ` ⇌ ${toDelete.to}`} akan dihapus dari daftar. Tindakan ini tidak bisa dibatalkan.</p>
                         <div className="mt-6 flex gap-3">
-                            <button type="button" onClick={() => setToDelete(null)} className="h-11 flex-1 border-2 border-[#12233F] bg-white text-sm font-extrabold text-[#12233F] transition-colors hover:bg-white/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]">Batal</button>
-                            <button type="button" onClick={confirmDelete} className="h-11 flex-1 border-2 border-[#12233F] bg-red-700 text-sm font-extrabold text-white transition-colors hover:bg-red-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]">Hapus trayek</button>
+                            <button type="button" onClick={() => setToDelete(null)} className="press-pixel press-pixel-sm h-11 flex-1 border-2 border-[#12233F] bg-white text-sm font-extrabold text-[#12233F] hover:bg-white/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]">Batal</button>
+                            <button type="button" onClick={confirmDelete} className="press-pixel press-pixel-sm h-11 flex-1 border-2 border-[#12233F] bg-red-700 text-sm font-extrabold text-white hover:bg-red-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]">Hapus trayek</button>
                         </div>
                     </div>
                 </div>
