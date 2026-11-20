@@ -10,6 +10,7 @@ import AdminDashboard from './components/AdminDashboard'
 import AdminTrayek from './components/AdminTrayek'
 import AdminTrayekForm from './components/AdminTrayekForm'
 import AdminInfo from './components/AdminInfo'
+import CookieConsent from './components/CookieConsent'
 
 function Shell() {
   const { pathname } = useLocation()
@@ -36,6 +37,7 @@ function Shell() {
         </Routes>
       </main>
       {!isAdmin && !isMaps && <Footer />}
+      {!isAdmin && <CookieConsent />}
     </div>
   )
 }

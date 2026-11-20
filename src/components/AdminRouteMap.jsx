@@ -47,7 +47,7 @@ export function RouteMap({ parts = [], stops = [], color = '#2563EB', markerColo
 
     return (
         <div className={`relative isolate ${className}`}>
-            <div ref={el} className="absolute inset-0 bg-slate-100" />
+            <div ref={el} className="absolute inset-0 bg-[#E8E1CC]" />
             {!parts.length && (
                 <p className="absolute inset-0 z-[500] flex items-center justify-center px-6 text-center text-xs text-slate-500 pointer-events-none">
                     Unggah file GeoJSON untuk melihat jalur di peta.
@@ -67,22 +67,22 @@ export function RouteMapModal({ route, onClose }) {
     }, [onClose])
 
     return (
-        <div className="fixed inset-0 z-[2000] bg-black/50 flex items-center justify-center p-4" onClick={onClose}>
+        <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-[#12233F]/55 p-4" onClick={onClose}>
             <div role="dialog" aria-modal="true" aria-label={`Peta trayek ${route.kode}`} onClick={(e) => e.stopPropagation()}
-                className="bg-white w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden">
-                <header className="flex items-center gap-3 px-5 py-4 border-b border-gray-200">
-                    <span className="inline-flex min-w-9 h-8 px-2 items-center justify-center rounded-md text-xs font-bold text-white" style={{ background: route.color }}>{route.kode}</span>
-                    <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold truncate">{route.from}{route.to && ` ⇌ ${route.to}`}</p>
-                        {route.via && <p className="text-xs text-gray-500 truncate">Via {route.via}</p>}
+                className="w-full max-w-4xl overflow-hidden border-2 border-[#12233F] bg-white shadow-[6px_6px_0_#12233F]">
+                <header className="flex items-center gap-3 border-b-2 border-[#12233F] bg-[#F7F4EA] px-4 py-4 sm:px-5">
+                    <span className="inline-flex h-9 min-w-10 items-center justify-center border-2 border-[#12233F] px-2 text-xs font-extrabold text-white" style={{ background: route.color }}>{route.kode}</span>
+                    <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-extrabold text-[#12233F]">{route.from}{route.to && ` ⇌ ${route.to}`}</p>
+                        {route.via && <p className="mt-0.5 truncate text-xs text-gray-500">Via {route.via}</p>}
                     </div>
-                    <button type="button" onClick={onClose} aria-label="Tutup" className="p-2 text-gray-500 hover:text-gray-900"><Icon name="close" className="w-5 h-5" /></button>
+                    <button type="button" onClick={onClose} aria-label="Tutup peta" className="grid h-9 w-9 shrink-0 place-items-center border-2 border-[#12233F] bg-white text-[#12233F] transition-colors hover:bg-[#F97316] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]"><Icon name="close" className="h-4 w-4" /></button>
                 </header>
-                <RouteMap className="h-[60vh]" parts={route.parts} stops={route.stops} color={route.color} markerColor={route.markerColor} />
-                <footer className="flex flex-wrap gap-x-8 gap-y-1 px-5 py-3 text-xs text-gray-600 border-t border-gray-200">
-                    <span>Tarif: <b className="text-gray-900">{route.tarif}</b></span>
-                    <span>Estimasi: <b className="text-gray-900">{route.estimasi}</b></span>
-                    <span>Halte: <b className="text-gray-900">{route.stops?.length || 0}</b></span>
+                <RouteMap className="h-[60vh] min-h-[320px]" parts={route.parts} stops={route.stops} color={route.color} markerColor={route.markerColor} />
+                <footer className="flex flex-wrap gap-x-8 gap-y-2 border-t-2 border-[#12233F] bg-[#F7F4EA] px-5 py-3 text-xs text-gray-600">
+                    <span>Tarif: <b className="text-[#12233F]">{route.tarif}</b></span>
+                    <span>Estimasi: <b className="text-[#12233F]">{route.estimasi}</b></span>
+                    <span>Halte: <b className="text-[#12233F]">{route.stops?.length || 0}</b></span>
                 </footer>
             </div>
         </div>

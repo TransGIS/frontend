@@ -6,12 +6,12 @@ import { RouteMapModal } from './AdminRouteMap'
 
 const PER = 5
 const KIND = { biskita: ['BisKita Trans Pakuan', 'koridor', 'Koridor BisKita Trans Pakuan'], angkot: ['Trayek Angkot Bogor', 'trayek', 'Trayek Angkot Bogor'] }
-const sel = 'h-10 rounded-lg border border-gray-200 bg-white px-3 text-xs text-gray-700 outline-none focus:ring-2 focus:ring-[#1D4ED8]'
+const sel = 'h-11 border-2 border-[#12233F]/25 bg-white px-3 text-xs font-semibold text-[#12233F] outline-none transition-colors hover:border-[#1B3A8C] focus:border-[#1B3A8C] focus:ring-2 focus:ring-[#1B3A8C]/15'
 
 export default function AdminTrayek() {
     const { kind = 'biskita' } = useParams()
     const k = KIND[kind] ? kind : 'biskita'
-    const [title] = [KIND[k][0]]
+    const title = KIND[k][0]
     const [rows, setRows] = useState(null)
     const [err, setErr] = useState('')
     const [q, setQ] = useState('')
@@ -24,7 +24,7 @@ export default function AdminTrayek() {
 
     const list = useMemo(() => {
         const s = q.trim().toLowerCase()
-        return (rows || []).filter((r) => !s || `${r.kode} ${r.from} ${r.to} ${r.via || ""}`.toLowerCase().includes(s))
+        return (rows || []).filter((r) => !s || `${r.kode} ${r.from} ${r.to} ${r.via || ''}`.toLowerCase().includes(s))
     }, [rows, q])
     const pages = Math.max(1, Math.ceil(list.length / PER))
     const cur = Math.min(page, pages)
@@ -35,45 +35,49 @@ export default function AdminTrayek() {
     }
 
     return (
-        <div className="max-w-[1100px]">
-            <nav aria-label="Breadcrumb" className="text-xs text-gray-500 flex gap-2"><Link to="/admin/dasbor" className="hover:underline">Beranda</Link>›<span>Manajemen Trayek</span>›<span className="text-blue-600">{title}</span></nav>
-            <div className="mt-3 flex flex-wrap items-start justify-between gap-3">
-                <div><h1 className="text-2xl font-bold tracking-tight">Manajemen {title}</h1>
-                    <p className="text-sm text-gray-600 mt-1 max-w-2xl">Pengelolaan data {KIND[k][1]}, rute operasional, titik halte, jadwal headway, dan armada Kota Bogor.</p></div>
-                <Link to={`/admin/trayek/${k}/baru`} className="h-10 px-4 rounded-lg bg-[#EA580C] hover:bg-orange-700 text-white text-xs font-bold inline-flex items-center gap-2 transition-colors"><Icon name="plus" />Tambah Rute / Halte</Link>
+        <div className="max-w-[1200px]">
+            <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-2 text-xs text-gray-500">
+                <Link to="/admin/dasbor" className="font-semibold text-[#1B3A8C] hover:text-[#F97316]">Beranda</Link><span aria-hidden="true">›</span><span>Manajemen Trayek</span><span aria-hidden="true">›</span><span className="font-semibold text-[#12233F]">{title}</span>
+            </nav>
+            <div className="mt-4 flex flex-wrap items-end justify-between gap-4">
+                <div>
+                    <h1 className="max-w-3xl font-pixel text-4xl font-semibold leading-[1.05] text-[#1B3A8C] sm:text-5xl">Manajemen {title}</h1>
+                    <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-600">Kelola data {KIND[k][1]}, rute operasional, titik halte, jadwal, dan armada Kota Bogor.</p>
+                </div>
+                <Link to={`/admin/trayek/${k}/baru`} className="inline-flex h-11 w-full items-center justify-center gap-2 border-2 border-[#12233F] bg-[#1B3A8C] px-4 text-xs font-extrabold text-white shadow-[4px_4px_0_#F97316] transition-colors hover:bg-[#12233F] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] sm:w-auto"><Icon name="plus" />Tambah Rute / Halte</Link>
             </div>
 
-            <div className="mt-6 bg-white rounded-2xl border border-gray-200 p-4 flex flex-wrap gap-3">
-                <label className="flex-1 min-w-[220px] flex items-center gap-2 h-10 rounded-lg border border-gray-200 bg-slate-50 px-3 focus-within:ring-2 focus-within:ring-[#1D4ED8]">
-                    <Icon name="search" className="text-slate-400" />
-                    <input value={q} onChange={(e) => { setQ(e.target.value); setPage(1) }} placeholder="Cari nomor koridor, nama trayek, atau terminal..." className="flex-1 bg-transparent text-xs outline-none placeholder-slate-400" />
+            <div className="mt-7 flex flex-wrap gap-3 border-2 border-[#12233F] bg-white p-4 shadow-[4px_4px_0_#12233F]">
+                <label className="flex h-11 min-w-[220px] flex-1 items-center gap-2.5 border-2 border-[#12233F]/25 bg-[#F7F4EA] px-3 transition-colors focus-within:border-[#1B3A8C] focus-within:ring-2 focus-within:ring-[#1B3A8C]/15">
+                    <Icon name="search" className="shrink-0 text-[#F97316]" />
+                    <input aria-label="Cari trayek" value={q} onChange={(e) => { setQ(e.target.value); setPage(1) }} placeholder="Cari nomor koridor, nama trayek, atau terminal..." className="min-w-0 flex-1 bg-transparent text-xs font-medium text-[#12233F] outline-none placeholder:font-normal placeholder:text-gray-400" />
                 </label>
                 <select className={sel} aria-label="Status"><option>Aktif Normal</option><option>Nonaktif</option></select>
                 <select className={sel} aria-label="Arah layanan"><option>Arah Layanan: Semua</option><option>Pergi</option><option>Pulang</option></select>
-                <button type="button" className={`${sel} inline-flex items-center gap-2 font-medium`}><Icon name="filter" />Filter Lanjutan</button>
-                <button type="button" onClick={load} aria-label="Muat ulang" className={`${sel} px-2.5`}><Icon name="refresh" /></button>
+                <button type="button" className={`${sel} inline-flex items-center justify-center gap-2`}><Icon name="filter" className="text-[#F97316]" />Filter Lanjutan</button>
+                <button type="button" onClick={load} aria-label="Muat ulang" className={`${sel} grid w-11 place-items-center px-0`}><Icon name="refresh" /></button>
             </div>
 
-            <div className="mt-5 bg-white rounded-2xl border border-gray-200 overflow-hidden">
-                {err && <p role="alert" className="m-4 text-sm text-red-700 bg-red-50 rounded-xl p-3">{err}</p>}
-                {!rows && !err ? <p className="p-6 text-sm text-gray-500">Memuat data trayek…</p> : (
+            <div className="mt-6 border-2 border-[#12233F] bg-white shadow-[4px_4px_0_#12233F]">
+                {err && <p role="alert" className="m-4 border-l-4 border-red-700 bg-red-50 px-3 py-2.5 text-sm font-semibold text-red-700">{err}</p>}
+                {!rows && !err ? <p className="p-6 text-sm font-semibold text-gray-500">Memuat data trayek…</p> : (
                     <div className="overflow-x-auto">
-                        <table className="w-full text-left min-w-[760px]">
-                            <thead className="bg-slate-50 text-[11px] font-bold uppercase tracking-wide text-gray-600 border-b border-gray-200">
-                                <tr><th className="py-4 pl-6 w-24">Kode</th><th>Nama Trayek / Hubungan Koridor</th><th className="text-center">Halte</th><th className="text-center">Estimasi</th><th>Tarif</th><th className="text-center pr-6">Aksi</th></tr>
+                        <table className="w-full min-w-[780px] text-left">
+                            <thead className="border-b-2 border-[#12233F] bg-[#12233F] text-xs font-extrabold text-white">
+                                <tr><th className="w-24 py-4 pl-6">Kode</th><th>Nama Trayek / Hubungan Koridor</th><th className="text-center">Halte</th><th className="text-center">Estimasi</th><th>Tarif</th><th className="pr-6 text-center">Aksi</th></tr>
                             </thead>
                             <tbody>
                                 {vis.map((r) => (
-                                    <tr key={r.id} className="border-b border-gray-100 last:border-0 hover:bg-slate-50/60">
-                                        <td className="py-4 pl-6"><span className="inline-flex min-w-9 h-7 px-2 items-center justify-center rounded-md text-xs font-bold text-white" style={{ background: r.color }}>{r.kode}</span></td>
-                                        <td className="py-3 pr-4"><p className="text-sm font-semibold">{r.from}{r.to && <><span className="text-gray-400"> ⇌ </span>{r.to}</>}</p>{r.via && <p className="text-xs text-gray-500 mt-0.5">Via {r.via}</p>}</td>
-                                        <td className="text-center">{r.halte ? <><b className="text-sm block">{r.halte}</b><span className="text-[11px] text-gray-400">Shelter</span></> : <span className="text-xs text-gray-400">—</span>}</td>
-                                        <td className="text-center"><span className="inline-block rounded bg-slate-100 px-2 py-1 text-xs font-semibold whitespace-nowrap">{r.estimasi}</span></td>
-                                        <td className="text-sm font-semibold whitespace-nowrap">{r.tarif}</td>
-                                        <td className="pr-6"><div className="flex justify-center gap-3 text-[#1D4ED8]">
-                                            <button type="button" onClick={() => setMapRow(r)} aria-label={`Lihat peta ${r.kode}`} className="hover:text-blue-900"><Icon name="map" className="w-[18px] h-[18px]" /></button>
-                                            <Link to={`/admin/trayek/${k}/${encodeURIComponent(r.id)}/ubah`} aria-label={`Ubah ${r.kode}`} className="text-gray-600 hover:text-gray-900"><Icon name="edit" className="w-[18px] h-[18px]" /></Link>
-                                            <button type="button" onClick={() => setToDelete(r)} aria-label={`Hapus ${r.kode}`} className="text-red-500 hover:text-red-700"><Icon name="trash" className="w-[18px] h-[18px]" /></button>
+                                    <tr key={r.id} className="border-b-2 border-[#12233F]/10 transition-colors last:border-0 hover:bg-[#F7F4EA]">
+                                        <td className="py-4 pl-6"><span className="inline-flex h-8 min-w-10 items-center justify-center border-2 border-[#12233F] px-2 text-xs font-extrabold text-white" style={{ background: r.color }}>{r.kode}</span></td>
+                                        <td className="py-3 pr-4"><p className="text-sm font-extrabold leading-5 text-[#12233F]">{r.from}{r.to && <><span className="text-[#F97316]"> ⇌ </span>{r.to}</>}</p>{r.via && <p className="mt-1 text-xs text-gray-500">Via {r.via}</p>}</td>
+                                        <td className="text-center">{r.halte ? <><b className="block text-sm text-[#12233F]">{r.halte}</b><span className="text-[11px] text-gray-400">halte</span></> : <span className="text-xs text-gray-400">—</span>}</td>
+                                        <td className="text-center"><span className="inline-block whitespace-nowrap border border-[#12233F]/20 bg-[#F7F4EA] px-2 py-1 text-xs font-bold text-[#12233F]">{r.estimasi}</span></td>
+                                        <td className="whitespace-nowrap text-sm font-extrabold text-[#12233F]">{r.tarif}</td>
+                                        <td className="pr-6"><div className="flex justify-center gap-2">
+                                            <button type="button" onClick={() => setMapRow(r)} aria-label={`Lihat peta ${r.kode}`} title={`Lihat peta ${r.kode}`} className="grid h-9 w-9 place-items-center border-2 border-[#12233F]/20 text-[#1B3A8C] transition-colors hover:border-[#12233F] hover:bg-[#EAF0FF] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]"><Icon name="map" className="h-[18px] w-[18px]" /></button>
+                                            <Link to={`/admin/trayek/${k}/${encodeURIComponent(r.id)}/ubah`} aria-label={`Ubah ${r.kode}`} title={`Ubah ${r.kode}`} className="grid h-9 w-9 place-items-center border-2 border-[#12233F]/20 text-gray-600 transition-colors hover:border-[#12233F] hover:bg-white hover:text-[#12233F] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]"><Icon name="edit" className="h-[18px] w-[18px]" /></Link>
+                                            <button type="button" onClick={() => setToDelete(r)} aria-label={`Hapus ${r.kode}`} title={`Hapus ${r.kode}`} className="grid h-9 w-9 place-items-center border-2 border-red-200 text-red-600 transition-colors hover:border-red-700 hover:bg-red-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]"><Icon name="trash" className="h-[18px] w-[18px]" /></button>
                                         </div></td>
                                     </tr>
                                 ))}
@@ -83,14 +87,14 @@ export default function AdminTrayek() {
                     </div>
                 )}
                 {rows && (
-                    <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 border-t border-gray-200 text-xs text-gray-600">
-                        <p>Menampilkan <b>{list.length ? (cur - 1) * PER + 1 : 0} - {(cur - 1) * PER + vis.length}</b> dari <b>{list.length}</b> {KIND[k][2]}</p>
-                        <div className="flex gap-1.5">
-                            <button type="button" disabled={cur === 1} onClick={() => setPage(cur - 1)} className="h-8 px-3 rounded-md border border-gray-200 disabled:text-gray-300 disabled:cursor-not-allowed">Sebelumnya</button>
+                    <div className="flex flex-wrap items-center justify-between gap-3 border-t-2 border-[#12233F] bg-[#F7F4EA] px-5 py-4 text-xs text-gray-600">
+                        <p>Menampilkan <b className="text-[#12233F]">{list.length ? (cur - 1) * PER + 1 : 0}–{(cur - 1) * PER + vis.length}</b> dari <b className="text-[#12233F]">{list.length}</b> {KIND[k][2]}</p>
+                        <div className="flex flex-wrap gap-1.5">
+                            <button type="button" disabled={cur === 1} onClick={() => setPage(cur - 1)} className="h-9 border-2 border-[#12233F]/20 bg-white px-3 font-bold transition-colors hover:border-[#12233F] disabled:cursor-not-allowed disabled:text-gray-300">Sebelumnya</button>
                             {Array.from({ length: pages }, (_, i) => i + 1).map((n) => (
-                                <button key={n} type="button" onClick={() => setPage(n)} aria-current={n === cur ? 'page' : undefined} className={`h-8 w-8 rounded-md border font-semibold ${n === cur ? 'bg-[#1D4ED8] border-[#1D4ED8] text-white' : 'border-gray-200 hover:bg-gray-50'}`}>{n}</button>
+                                <button key={n} type="button" onClick={() => setPage(n)} aria-label={`Halaman ${n}`} aria-current={n === cur ? 'page' : undefined} className={`h-9 w-9 border-2 font-extrabold ${n === cur ? 'border-[#12233F] bg-[#1B3A8C] text-white shadow-[2px_2px_0_#F97316]' : 'border-[#12233F]/20 bg-white text-[#12233F] hover:border-[#12233F]'}`}>{n}</button>
                             ))}
-                            <button type="button" disabled={cur === pages} onClick={() => setPage(cur + 1)} className="h-8 px-3 rounded-md border border-gray-200 disabled:text-gray-300 disabled:cursor-not-allowed">Selanjutnya</button>
+                            <button type="button" disabled={cur === pages} onClick={() => setPage(cur + 1)} className="h-9 border-2 border-[#12233F]/20 bg-white px-3 font-bold transition-colors hover:border-[#12233F] disabled:cursor-not-allowed disabled:text-gray-300">Selanjutnya</button>
                         </div>
                     </div>
                 )}
@@ -99,13 +103,14 @@ export default function AdminTrayek() {
             {mapRow && <RouteMapModal route={mapRow} onClose={() => setMapRow(null)} />}
 
             {toDelete && (
-                <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={() => setToDelete(null)}>
-                    <div role="alertdialog" aria-modal="true" onClick={(e) => e.stopPropagation()} className="bg-white rounded-2xl p-6 w-full max-w-sm">
-                        <h2 className="font-bold">Hapus trayek {toDelete.kode}?</h2>
-                        <p className="text-sm text-gray-600 mt-2">{toDelete.from}{toDelete.to && ` ⇌ ${toDelete.to}`} akan dihapus dari daftar. Tindakan ini tidak bisa dibatalkan.</p>
-                        <div className="mt-5 flex justify-end gap-2">
-                            <button type="button" onClick={() => setToDelete(null)} className="h-10 px-4 rounded-lg border border-gray-200 text-sm font-medium">Batal</button>
-                            <button type="button" onClick={confirmDelete} className="h-10 px-4 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm font-bold">Hapus trayek</button>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#12233F]/55 p-4" onClick={() => setToDelete(null)}>
+                    <div role="alertdialog" aria-modal="true" aria-labelledby="delete-route-title" onClick={(e) => e.stopPropagation()} className="w-full max-w-sm border-2 border-[#12233F] bg-[#F7F4EA] p-6 shadow-[6px_6px_0_#12233F]">
+                        <span className="grid h-11 w-11 place-items-center border-2 border-[#12233F] bg-red-100 text-red-700"><Icon name="trash" className="h-5 w-5" /></span>
+                        <h2 id="delete-route-title" className="mt-4 font-pixel text-3xl font-semibold text-[#1B3A8C]">Hapus trayek {toDelete.kode}?</h2>
+                        <p className="mt-2 text-sm leading-6 text-gray-600">{toDelete.from}{toDelete.to && ` ⇌ ${toDelete.to}`} akan dihapus dari daftar. Tindakan ini tidak bisa dibatalkan.</p>
+                        <div className="mt-6 flex gap-3">
+                            <button type="button" onClick={() => setToDelete(null)} className="h-11 flex-1 border-2 border-[#12233F] bg-white text-sm font-extrabold text-[#12233F] transition-colors hover:bg-white/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]">Batal</button>
+                            <button type="button" onClick={confirmDelete} className="h-11 flex-1 border-2 border-[#12233F] bg-red-700 text-sm font-extrabold text-white transition-colors hover:bg-red-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]">Hapus trayek</button>
                         </div>
                     </div>
                 </div>

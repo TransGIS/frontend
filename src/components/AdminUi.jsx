@@ -23,6 +23,7 @@ const P = {
     trend: <path d="M3 17l6-6 4 4 8-8M15 7h6v6" />,
     route: <><circle cx="6" cy="5" r="2" /><circle cx="18" cy="19" r="2" /><path d="M8 5h6a3 3 0 010 6h-4a3 3 0 000 6h6" /></>,
     users: <><circle cx="9" cy="8" r="3.5" /><path d="M2 20a7 7 0 0114 0M16 4.5a3.5 3.5 0 010 7M18 20a6 6 0 00-2-4.5" /></>,
+    close: <path d="M6 6l12 12M18 6L6 18" />,
 }
 export function Icon({ name, className = '' }) {
     const size = /(^|\s)w-/.test(className) ? '' : 'w-4 h-4 '
@@ -31,22 +32,38 @@ export function Icon({ name, className = '' }) {
 
 export function Logo({ className = '' }) {
     return (
-        <Link to="/admin/dasbor" className={`inline-flex items-center gap-1.5 ${className}`}>
-            <svg viewBox="0 0 24 30" className="w-7 h-9" aria-hidden="true"><path d="M12 29S2 19 2 11a10 10 0 1120 0c0 8-10 18-10 18z" fill="#F97316" /><circle cx="12" cy="11" r="4" fill="#fff" /></svg>
-            <span className="text-3xl font-bold tracking-tight"><span className="text-[#0A47A9]">Trans</span><span className="text-[#047857]">GIS</span></span>
+        <Link to="/admin/dasbor" aria-label="TransGIS, buka dasbor admin" className={`inline-flex items-center gap-2.5 ${className}`}>
+            <span className="grid h-9 w-9 place-items-center border-2 border-[#12233F] bg-[#1B3A8C] shadow-[3px_3px_0_#12233F]">
+                <svg viewBox="0 0 24 24" className="h-5 w-5 text-white" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                    <path d="M5 17V7c0-2 2-3 7-3s7 1 7 3v10M5 13h14M8 8h8M8 17v3M16 17v3" />
+                    <path d="M8 16h.01M16 16h.01" strokeWidth="3" />
+                </svg>
+            </span>
+            <span className="font-pixel text-2xl font-semibold leading-none"><span className="text-[#1B3A8C]">Trans</span><span className="text-[#F97316]">GIS</span></span>
         </Link>
     )
 }
 
-export function AuthShell({ children }) {
+export function AuthShell({ title = 'Masuk ke panel admin', children }) {
     return (
-        <div className="min-h-screen bg-[#1D4ED8] flex flex-col">
-            <header className="bg-white h-[72px] px-6 sm:px-8 flex items-center"><Logo /></header>
-            <main className="flex-1 flex items-center justify-center p-4">
-                <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md px-8 sm:px-10 py-9">
-                    <p className="text-center text-2xl font-bold tracking-tight mb-4"><span className="text-[#1D4ED8]">Trans</span><span className="text-emerald-500">GIS</span></p>
-                    <h1 className="text-center text-lg font-bold text-gray-900 leading-snug">Tentukan Perjalanan di Bogor<br /><span className="text-gray-700">dengan </span><span className="text-[#F97316]">TransGIS</span></h1>
-                    {children}
+        <div className="admin-page flex min-h-screen flex-col bg-[#F7F4EA] text-[#12233F]">
+            <header className="flex h-20 items-center border-b-2 border-[#12233F] bg-white px-4 sm:px-8"><Logo /></header>
+            <main className="flex flex-1 items-center justify-center px-4 py-8 sm:px-6 sm:py-12">
+                <div className="grid w-full max-w-5xl border-2 border-[#12233F] bg-white shadow-[7px_7px_0_#12233F] lg:grid-cols-[0.95fr_1.05fr]">
+                    <section className="relative overflow-hidden border-b-2 border-[#12233F] bg-[#1B3A8C] px-6 pb-20 pt-7 text-white sm:px-8 lg:border-b-0 lg:border-r-2 lg:px-10 lg:pb-24 lg:pt-10">
+                        <p className="font-pixel text-xl font-semibold text-[#F97316]">Area pengelola</p>
+                        <h1 className="mt-3 max-w-md font-pixel text-4xl font-semibold leading-[1.05] sm:text-5xl">Panel Admin TransGIS</h1>
+                        <p className="mt-4 max-w-md text-sm leading-6 text-white/80">Kelola trayek, halte, tarif, dan aktivitas portal transportasi Bogor dari satu tempat.</p>
+                        <div className="mt-7 space-y-3 text-sm font-semibold">
+                            <p className="flex items-center gap-3"><span className="grid h-9 w-9 place-items-center border-2 border-white/70 bg-white/10"><Icon name="bus" className="h-5 w-5" /></span>Data BisKita dan angkot</p>
+                            <p className="flex items-center gap-3"><span className="grid h-9 w-9 place-items-center border-2 border-white/70 bg-white/10"><Icon name="route" className="h-5 w-5" /></span>Pemantauan rute dan kunjungan</p>
+                        </div>
+                        <div className="road-strip absolute inset-x-0 bottom-0" aria-hidden="true" />
+                    </section>
+                    <section className="px-6 py-7 sm:px-9 sm:py-9 lg:px-10">
+                        <h2 className="font-pixel text-3xl font-semibold leading-tight text-[#1B3A8C] sm:text-4xl">{title}</h2>
+                        {children}
+                    </section>
                 </div>
             </main>
         </div>
@@ -56,11 +73,11 @@ export function AuthShell({ children }) {
 export function Field({ label, icon, type = 'text', value, onChange, placeholder, right, autoComplete }) {
     return (
         <label className="block">
-            <span className="block text-xs font-semibold text-gray-800 mb-1.5">{label}</span>
-            <span className="flex items-center gap-2.5 border border-gray-200 bg-slate-50 rounded-xl px-3.5 h-12 focus-within:ring-2 focus-within:ring-[#1D4ED8] focus-within:bg-white transition">
-                <Icon name={icon} className="w-4 h-4 text-slate-400 shrink-0" />
+            <span className="mb-2 block text-sm font-extrabold text-[#12233F]">{label}</span>
+            <span className="flex h-12 items-center gap-2.5 border-2 border-[#12233F]/25 bg-white px-3.5 transition-colors focus-within:border-[#1B3A8C] focus-within:ring-2 focus-within:ring-[#1B3A8C]/15">
+                <Icon name={icon} className="h-4 w-4 shrink-0 text-[#F97316]" />
                 <input type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} autoComplete={autoComplete}
-                    className="flex-1 min-w-0 bg-transparent text-sm text-gray-800 outline-none placeholder-slate-400" />
+                    className="min-w-0 flex-1 bg-transparent text-sm font-medium text-[#12233F] outline-none placeholder:font-normal placeholder:text-gray-400" />
                 {right}
             </span>
         </label>
@@ -68,5 +85,5 @@ export function Field({ label, icon, type = 'text', value, onChange, placeholder
 }
 
 export const PrimaryBtn = ({ children, ...p }) => (
-    <button {...p} className="w-full h-12 rounded-xl bg-[#1D4ED8] hover:bg-[#1E40AF] disabled:opacity-70 disabled:cursor-wait text-white text-sm font-bold uppercase tracking-wide shadow-lg shadow-blue-700/30 flex items-center justify-center gap-2 transition-colors">{children}</button>
+    <button {...p} className="flex h-12 w-full items-center justify-center gap-2 border-2 border-[#12233F] bg-[#1B3A8C] px-4 text-sm font-extrabold text-white shadow-[4px_4px_0_#F97316] transition-colors hover:bg-[#12233F] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] disabled:cursor-wait disabled:opacity-60">{children}</button>
 )

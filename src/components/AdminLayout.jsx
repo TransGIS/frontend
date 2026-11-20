@@ -26,52 +26,52 @@ export default function AdminLayout() {
     const [confirmOut, setConfirmOut] = useState(false)
     if (!s) return <Navigate to="/admin/login" replace />
     const initials = (s.user?.name || 'AD').split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase()
-    const cls = (active) => `flex items-center gap-3 px-3 h-10 rounded-lg text-sm transition-colors ${active ? 'bg-[#EA580C] text-white font-semibold' : 'text-blue-50 hover:bg-white/10'}`
+    const cls = (active) => `mb-1.5 flex min-h-11 items-center gap-3 border-2 px-3 py-2.5 text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] ${active ? 'border-[#12233F] bg-[#F97316] font-extrabold text-[#12233F] shadow-[3px_3px_0_#F7F4EA]' : 'border-transparent font-semibold text-white/75 hover:border-white/20 hover:bg-white/10 hover:text-white'}`
 
     return (
-        <div className="min-h-screen bg-[#F0F2F7] text-gray-900">
-            <header className="fixed top-0 inset-x-0 z-40 h-[72px] bg-white flex items-center gap-3 px-4 sm:px-8 border-b border-gray-100">
-                <button type="button" onClick={() => setOpen(!open)} aria-label="Buka menu" className="lg:hidden p-2 -ml-2 text-gray-600"><Icon name="menu" className="w-6 h-6" /></button>
+        <div className="admin-page min-h-screen bg-[#F7F4EA] text-[#12233F]">
+            <header className="fixed inset-x-0 top-0 z-40 flex h-20 items-center gap-3 border-b-2 border-[#12233F] bg-white px-4 sm:px-6 lg:px-8">
+                <button type="button" onClick={() => setOpen(!open)} aria-label={open ? 'Tutup menu admin' : 'Buka menu admin'} aria-expanded={open} className="-ml-1 grid h-10 w-10 place-items-center border-2 border-[#12233F] text-[#12233F] transition-colors hover:bg-[#F97316] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] lg:hidden"><Icon name="menu" className="h-5 w-5" /></button>
                 <Logo />
-                <label className="hidden md:flex items-center gap-2 ml-auto w-96 max-w-[40%] h-10 rounded-lg bg-slate-100 px-3 focus-within:ring-2 focus-within:ring-[#1D4ED8]">
-                    <Icon name="search" className="text-slate-400" />
-                    <input placeholder="Cari rute, nomor trayek, koridor, atau halte..." className="flex-1 bg-transparent text-xs outline-none placeholder-slate-400" />
+                <label className="ml-auto hidden h-11 w-96 max-w-[38%] items-center gap-2 border-2 border-[#12233F]/20 bg-[#F7F4EA] px-3 transition-colors focus-within:border-[#1B3A8C] focus-within:ring-2 focus-within:ring-[#1B3A8C]/15 md:flex">
+                    <Icon name="search" className="shrink-0 text-[#F97316]" />
+                    <input aria-label="Cari di panel admin" placeholder="Cari rute, trayek, koridor, atau halte..." className="min-w-0 flex-1 bg-transparent text-xs font-medium text-[#12233F] outline-none placeholder:font-normal placeholder:text-gray-400" />
                 </label>
-                <div className="flex items-center gap-4 ml-auto md:ml-4">
-                    <button type="button" aria-label="Notifikasi" className="relative text-slate-500"><Icon name="bell" className="w-5 h-5" /><span className="absolute -top-0.5 right-0 w-2 h-2 rounded-full bg-orange-500" /></button>
-                    <span className="hidden sm:block w-px h-8 bg-gray-200" />
-                    <button type="button" onClick={() => setConfirmOut(true)} title="Klik untuk keluar" className="flex items-center gap-3 text-left">
-                        <span className="w-9 h-9 rounded-full bg-slate-800 text-white text-xs font-bold flex items-center justify-center">{initials}</span>
-                        <span className="hidden sm:block leading-tight"><b className="block text-xs">{s.user?.name}</b><span className="text-[11px] text-gray-500">{s.user?.role}</span></span>
-                        <Icon name="logout" className="w-4 h-4 text-gray-400" />
+                <div className="ml-auto flex items-center gap-2 sm:gap-3 md:ml-4">
+                    <button type="button" aria-label="Notifikasi" className="relative hidden h-10 w-10 place-items-center border-2 border-[#12233F]/20 text-[#12233F] transition-colors hover:border-[#12233F] hover:bg-[#F7F4EA] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] sm:grid"><Icon name="bell" className="h-5 w-5" /><span className="absolute right-1.5 top-1.5 h-2 w-2 bg-[#F97316]" /></button>
+                    <button type="button" onClick={() => setConfirmOut(true)} title="Keluar dari panel admin" className="flex items-center gap-2.5 border-2 border-transparent p-1 text-left transition-colors hover:border-[#12233F]/20 hover:bg-[#F7F4EA] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] sm:px-2">
+                        <span className="grid h-9 w-9 shrink-0 place-items-center border-2 border-[#12233F] bg-[#1B3A8C] text-xs font-extrabold text-white">{initials}</span>
+                        <span className="hidden leading-tight sm:block"><b className="block max-w-32 truncate text-xs text-[#12233F]">{s.user?.name}</b><span className="text-[11px] text-gray-500">{s.user?.role}</span></span>
+                        <Icon name="logout" className="h-4 w-4 shrink-0 text-[#F97316]" />
                     </button>
                 </div>
             </header>
 
-            {open && <button type="button" aria-label="Tutup menu" onClick={() => setOpen(false)} className="lg:hidden fixed inset-0 z-30 bg-black/40" />}
-            <aside className={`fixed z-30 top-[72px] bottom-0 left-0 w-72 bg-[#1D4ED8] px-4 py-7 overflow-y-auto transition-transform ${open ? '' : '-translate-x-full'} lg:translate-x-0`}>
+            {open && <button type="button" aria-label="Tutup menu admin" onClick={() => setOpen(false)} className="fixed inset-0 z-30 bg-[#12233F]/50 lg:hidden" />}
+            <aside className={`fixed bottom-0 left-0 top-20 z-30 w-72 overflow-y-auto border-r-2 border-[#12233F] bg-[#12233F] px-4 py-6 transition-transform duration-300 ${open ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
                 {GROUPS.map((g) => (
-                    <nav key={g.label} className="mb-6" aria-label={g.label}>
-                        <p className="px-3 mb-2 text-[11px] font-bold uppercase tracking-wide text-white">{g.label}</p>
+                    <nav key={g.label} className="mb-7" aria-label={g.label}>
+                        <p className="mb-2.5 px-3 text-xs font-bold text-white/50">{g.label}</p>
                         {g.items.map((i) => (
-                            <NavLink key={i.text + i.to} to={i.to} end={i.end} onClick={() => setOpen(false)} className={({ isActive }) => cls(isActive)}><Icon name={i.icon} className="w-[18px] h-[18px]" />{i.text}</NavLink>
+                            <NavLink key={i.text + i.to} to={i.to} end={i.end} onClick={() => setOpen(false)} className={({ isActive }) => cls(isActive)}><Icon name={i.icon} className="h-[18px] w-[18px] shrink-0" />{i.text}</NavLink>
                         ))}
                     </nav>
                 ))}
+                <p className="mx-3 mt-10 border-t-2 border-white/15 pt-4 text-xs leading-5 text-white/45">Panel pengelola transportasi Kota Bogor.</p>
             </aside>
 
-            <main className="pt-[72px] lg:pl-72"><div className="p-4 sm:p-8"><Outlet /></div></main>
+            <main className="min-h-screen pt-20 lg:pl-72"><div className="p-4 sm:p-6 lg:p-8"><Outlet /></div></main>
 
             {confirmOut && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <button type="button" aria-label="Tutup konfirmasi" onClick={() => setConfirmOut(false)} className="absolute inset-0 bg-black/40" />
-                    <div role="dialog" aria-modal="true" aria-labelledby="logout-title" className="relative bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
-                        <span className="w-11 h-11 rounded-xl bg-red-50 text-red-600 flex items-center justify-center"><Icon name="logout" className="w-5 h-5" /></span>
-                        <h2 id="logout-title" className="mt-4 text-base font-bold text-gray-900">Keluar dari Admin?</h2>
-                        <p className="mt-1.5 text-sm text-gray-600">Sesi Anda akan diakhiri. Untuk mengakses halaman admin lagi, Anda harus login kembali.</p>
-                        <div className="mt-5 flex gap-3">
-                            <button type="button" onClick={() => setConfirmOut(false)} className="flex-1 h-10 rounded-xl border border-gray-200 text-sm font-bold text-gray-700 hover:bg-gray-50 transition-colors">Batal</button>
-                            <button type="button" onClick={() => { session.clear(); nav('/admin/login', { replace: true }) }} className="flex-1 h-10 rounded-xl bg-red-600 text-white text-sm font-bold hover:bg-red-700 transition-colors">Keluar</button>
+                    <button type="button" aria-label="Tutup konfirmasi" onClick={() => setConfirmOut(false)} className="absolute inset-0 bg-[#12233F]/55" />
+                    <div role="dialog" aria-modal="true" aria-labelledby="logout-title" className="relative w-full max-w-sm border-2 border-[#12233F] bg-[#F7F4EA] p-6 shadow-[6px_6px_0_#12233F]">
+                        <span className="grid h-11 w-11 place-items-center border-2 border-[#12233F] bg-red-100 text-red-700"><Icon name="logout" className="h-5 w-5" /></span>
+                        <h2 id="logout-title" className="mt-4 font-pixel text-3xl font-semibold text-[#1B3A8C]">Keluar dari Admin?</h2>
+                        <p className="mt-2 text-sm leading-6 text-gray-600">Sesi Anda akan diakhiri. Untuk membuka panel ini lagi, masuk kembali dengan akun admin.</p>
+                        <div className="mt-6 flex gap-3">
+                            <button type="button" onClick={() => setConfirmOut(false)} className="h-11 flex-1 border-2 border-[#12233F] bg-white text-sm font-extrabold text-[#12233F] transition-colors hover:bg-white/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]">Batal</button>
+                            <button type="button" onClick={() => { session.clear(); nav('/admin/login', { replace: true }) }} className="h-11 flex-1 border-2 border-[#12233F] bg-red-700 text-sm font-extrabold text-white transition-colors hover:bg-red-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]">Keluar</button>
                         </div>
                     </div>
                 </div>

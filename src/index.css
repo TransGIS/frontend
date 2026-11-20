@@ -16,6 +16,7 @@
 
 .landing-page,
 .maps-page,
+.admin-page,
 .site-footer {
   font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
 }
@@ -77,7 +78,10 @@
 @media (prefers-reduced-motion: reduce) {
   .landing-page *,
   .landing-page *::before,
-  .landing-page *::after {
+  .landing-page *::after,
+  .admin-page *,
+  .admin-page *::before,
+  .admin-page *::after {
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
   }

@@ -2,42 +2,62 @@ import { useEffect, useState } from 'react'
 import { adminApi } from '../lib/adminApi'
 import { Icon } from './AdminUi'
 
-const TYPE = { 'Penambahan Rute': 'bg-emerald-50 text-emerald-700 border-emerald-200', 'Perubahan Rute': 'bg-blue-50 text-blue-700 border-blue-200', 'Penghapusan Rute': 'bg-orange-50 text-orange-700 border-orange-200' }
+const TYPE = {
+    'Penambahan Rute': 'border-emerald-700 bg-emerald-50 text-emerald-800',
+    'Perubahan Rute': 'border-[#1B3A8C] bg-[#EAF0FF] text-[#1B3A8C]',
+    'Penghapusan Rute': 'border-[#C2410C] bg-orange-50 text-[#9A3412]',
+}
+
+const deltaOf = (value) => (value ? `${value > 0 ? '+' : ''}${value}%` : undefined)
 
 function Stat({ title, icon, tone, value, unit, badge, foot, footRight }) {
     return (
-        <div className="bg-white rounded-2xl border border-gray-200 p-5 flex flex-col">
-            <div className="flex items-start justify-between">
-                <p className="text-xs font-bold uppercase tracking-wide text-gray-700">{title}</p>
-                <span className={`w-10 h-10 rounded-xl flex items-center justify-center ${tone.bg} ${tone.text}`}><Icon name={icon} className="w-5 h-5" /></span>
+        <article className="flex flex-col border-2 border-[#12233F] bg-white p-5 shadow-[4px_4px_0_#12233F]">
+            <div className="flex items-start justify-between gap-3">
+                <h2 className="text-sm font-extrabold leading-5 text-[#12233F]">{title}</h2>
+                <span className={`grid h-10 w-10 shrink-0 place-items-center border-2 border-[#12233F] ${tone.bg} ${tone.text}`}><Icon name={icon} className="h-5 w-5" /></span>
             </div>
-            <p className="mt-3 flex items-baseline gap-2"><span className={`text-4xl font-bold ${tone.text}`}>{value}</span><span className="text-xs text-gray-500">{unit}</span>
-                {badge && <span className={`text-[11px] font-semibold rounded px-1.5 py-0.5 ${tone.bg}`}>{badge}</span>}</p>
-            <p className="mt-auto pt-5 flex justify-between text-xs text-gray-500"><span>{foot}</span><span className="text-gray-400">{footRight}</span></p>
-        </div>
+            <p className="mt-4 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                <span className={`font-pixel text-5xl font-semibold leading-none ${tone.text}`}>{value}</span>
+                {unit && <span className="text-xs font-semibold text-gray-500">{unit}</span>}
+                {badge && <span className="border border-[#12233F]/25 bg-[#F7F4EA] px-1.5 py-0.5 text-[11px] font-extrabold text-[#12233F]">{badge}</span>}
+            </p>
+            <p className="mt-auto flex flex-wrap justify-between gap-2 border-t-2 border-[#12233F]/10 pt-4 text-xs text-gray-500"><span>{foot}</span>{footRight && <span className="font-semibold text-[#1B3A8C]">{footRight}</span>}</p>
+        </article>
     )
 }
 
 function Chart({ series }) {
     const W = 640, H = 200, X0 = 50, top = 40
-    const max = Math.max(1, ...series.map((s) => s[1]))
-    const pts = series.map(([, v], i) => [series.length > 1 ? X0 + (i * (W - 2 * X0)) / (series.length - 1) : W / 2, top + (1 - v / max) * (H - top - 10)])
-    const peak = series.findIndex((s) => s[1] === max)
-    const d = pts.map((p, i) => {
-        if (!i) return `M${p[0]},${p[1]}`
-        const q = pts[i - 1], mx = (q[0] + p[0]) / 2
-        return `C${mx},${q[1]} ${mx},${p[1]} ${p[0]},${p[1]}`
+    const visits = series.map((s) => s[1] || 0)
+    const uniques = series.map((s) => s[2] || 0)
+    const max = Math.max(1, ...visits, ...uniques)
+    const x = (i) => (series.length > 1 ? X0 + (i * (W - 2 * X0)) / (series.length - 1) : W / 2)
+    const y = (v) => top + (1 - v / max) * (H - top - 10)
+    const curve = (vals) => vals.map((v, i) => {
+        if (!i) return `M${x(0)},${y(v)}`
+        const qx = x(i - 1), qy = y(vals[i - 1]), px = x(i), py = y(v), mx = (qx + px) / 2
+        return `C${mx},${qy} ${mx},${py} ${px},${py}`
     }).join(' ')
+    const line = curve(visits)
+    const peak = visits.indexOf(Math.max(...visits))
+    const hasUnique = uniques.some((v) => v > 0)
     return (
-        <svg viewBox={`0 0 ${W} ${H + 40}`} className="w-full" role="img" aria-label="Grafik pengunjung web 7 hari">
-            <defs><linearGradient id="fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#2563EB" stopOpacity=".3" /><stop offset="1" stopColor="#2563EB" stopOpacity="0" /></linearGradient></defs>
-            <path d={`${d} L${pts.at(-1)[0]},${H} L${pts[0][0]},${H} Z`} fill="url(#fill)" />
-            <path d={d} fill="none" stroke="#2563EB" strokeWidth="3" />
-            {pts.map((p, i) => <circle key={i} cx={p[0]} cy={p[1]} r="5" fill="#fff" stroke="#2563EB" strokeWidth="2.5" />)}
-            <g transform={`translate(${pts[peak][0] - 50},${pts[peak][1] - 34})`}><rect width="100" height="24" rx="4" fill="#111827" /><text x="50" y="16" textAnchor="middle" fontSize="11" fill="#fff" fontFamily="monospace">{max} (Puncak)</text></g>
+        <svg viewBox={`0 0 ${W} ${H + 40}`} className="w-full" role="img" aria-label="Grafik kunjungan dan pengunjung unik 7 hari">
+            <path d={`${line} L${x(visits.length - 1)},${H} L${x(0)},${H} Z`} fill="#1B3A8C" fillOpacity=".08" />
+            {hasUnique && <path d={curve(uniques)} fill="none" stroke="#F97316" strokeWidth="2.5" strokeDasharray="6 5" strokeLinecap="round" />}
+            <path d={line} fill="none" stroke="#1B3A8C" strokeWidth="3" />
+            {hasUnique && uniques.map((v, i) => <circle key={`u${i}`} cx={x(i)} cy={y(v)} r="3.5" fill="#F97316" stroke="#12233F" strokeWidth="1.5" />)}
+            {visits.map((v, i) => <circle key={i} cx={x(i)} cy={y(v)} r="5" fill={i === peak ? '#F97316' : '#fff'} stroke="#12233F" strokeWidth="2" />)}
+            <g transform={`translate(${x(peak) - 50},${Math.max(0, y(visits[peak]) - 34)})`}>
+                <rect width="100" height="24" fill="#12233F" />
+                <text x="50" y="16" textAnchor="middle" fontSize="11" fontWeight="700" fill="#fff" fontFamily="'Plus Jakarta Sans', sans-serif">{visits[peak]} kunjungan</text>
+            </g>
             {series.map(([l, v], i) => (
-                <g key={l} textAnchor="middle"><text x={pts[i][0]} y={H + 18} fontSize="12" fontWeight={i === peak ? 700 : 500} fill={i === peak ? '#111827' : '#6B7280'}>{l}</text>
-                    <text x={pts[i][0]} y={H + 33} fontSize="10" fontFamily="monospace" fill={i === peak ? '#EA580C' : '#9CA3AF'}>{v}</text></g>
+                <g key={l} textAnchor="middle" fontFamily="'Plus Jakarta Sans', sans-serif">
+                    <text x={x(i)} y={H + 18} fontSize="12" fontWeight={i === peak ? 800 : 500} fill={i === peak ? '#12233F' : '#6B7280'}>{l}</text>
+                    <text x={x(i)} y={H + 33} fontSize="10" fontWeight="700" fill={i === peak ? '#C2410C' : '#9CA3AF'}>{v}</text>
+                </g>
             ))}
         </svg>
     )
@@ -47,52 +67,75 @@ export default function AdminDashboard() {
     const [d, setD] = useState(null)
     const [err, setErr] = useState('')
     useEffect(() => { adminApi.dashboard().then(setD).catch((e) => setErr(e.message)) }, [])
-    if (err) return <p role="alert" className="text-sm text-red-700 bg-red-50 rounded-xl p-4">Data dashboard gagal dimuat: {err}</p>
-    if (!d) return <p className="text-sm text-gray-500">Memuat ringkasan…</p>
-    const peak = d.series.reduce((a, b) => (b[1] > a[1] ? b : a))
-    return (
-        <div className="max-w-[1100px]">
-            <h1 className="text-2xl font-bold tracking-tight">Ringkasan Sistem Transportasi</h1>
-            <p className="text-sm text-gray-600 mb-6">Pemantauan Trayek Angkutan Massal &amp; Angkot Kota Bogor berbasis Geografis</p>
+    if (err) return <p role="alert" className="border-2 border-red-800 bg-red-50 p-4 text-sm font-semibold text-red-800 shadow-[3px_3px_0_#7F1D1D]">Data dashboard gagal dimuat: {err}</p>
+    if (!d) return <p className="border-2 border-[#12233F] bg-white p-5 text-sm font-semibold text-gray-600 shadow-[3px_3px_0_#12233F]">Memuat ringkasan…</p>
 
-            <div className="grid gap-5 md:grid-cols-3">
-                <Stat title="Total Rute BisKita" icon="bus" tone={{ bg: 'bg-orange-50', text: 'text-orange-600' }} value={d.biskita.total} unit="Rute" badge={d.biskita.baru ? `+${d.biskita.baru} Baru` : undefined} foot={<>Tarif: <b className="text-gray-800">{d.biskita.tarif}</b></>} />
-                <Stat title="Total Rute Angkot" icon="van" tone={{ bg: 'bg-emerald-50', text: 'text-emerald-600' }} value={d.angkot.total} unit="Trayek Resmi" badge={d.angkot.baru ? `+${d.angkot.baru} Baru` : undefined} foot={<>Tarif: <b className="text-gray-800">{d.angkot.tarif}</b></>} />
-                <Stat title="Pengunjung Web" icon="users" tone={{ bg: 'bg-blue-50', text: 'text-blue-600' }} value={d.visitors.total} badge={d.visitors.delta ? `${d.visitors.delta > 0 ? '+' : ''}${d.visitors.delta}%` : undefined} foot="Dalam 7 Hari Terakhir" footRight="Portal Publik" />
+    const unique = d.unique || { total: 0, delta: 0 }
+    const visits = d.visits || d.visitors || { total: 0, delta: 0 }
+    const peak = d.series.reduce((a, b) => (b[1] > a[1] ? b : a))
+    const hasData = visits.total > 0 || unique.total > 0
+
+    return (
+        <div className="max-w-[1200px]">
+            <div className="mb-7">
+                <h1 className="font-pixel text-4xl font-semibold leading-tight text-[#1B3A8C] sm:text-5xl">Ringkasan Transportasi</h1>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-600">Pantau data BisKita, angkot, kunjungan portal, dan perubahan rute Kota Bogor.</p>
             </div>
 
-            <div className="mt-6 grid gap-5 lg:grid-cols-[1fr_340px]">
-                <section className="bg-white rounded-2xl border border-gray-200 p-5 sm:p-6">
+            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+                <Stat title="Total Rute BisKita" icon="bus" tone={{ bg: 'bg-orange-100', text: 'text-[#C2410C]' }} value={d.biskita.total} unit="Rute" badge={d.biskita.baru ? `+${d.biskita.baru} baru` : undefined} foot={<>Tarif: <b className="text-[#12233F]">{d.biskita.tarif}</b></>} />
+                <Stat title="Total Rute Angkot" icon="van" tone={{ bg: 'bg-emerald-100', text: 'text-emerald-800' }} value={d.angkot.total} unit="Trayek resmi" badge={d.angkot.baru ? `+${d.angkot.baru} baru` : undefined} foot={<>Tarif: <b className="text-[#12233F]">{d.angkot.tarif}</b></>} />
+                <Stat title="Kunjungan Web" icon="trend" tone={{ bg: 'bg-[#EAF0FF]', text: 'text-[#1B3A8C]' }} value={visits.total} badge={deltaOf(visits.delta)} foot="7 hari terakhir" footRight="Per pembukaan tab" />
+                <Stat title="Pengunjung Unik" icon="users" tone={{ bg: 'bg-[#FFEDD5]', text: 'text-[#C2410C]' }} value={unique.total} badge={deltaOf(unique.delta)} foot={unique.total ? 'Cookie anonim' : 'Belum ada persetujuan cookie'} footRight="7 hari" />
+            </div>
+
+            <div className="mt-7 grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+                <section className="min-w-0 border-2 border-[#12233F] bg-white p-5 shadow-[4px_4px_0_#12233F] sm:p-6">
                     <div className="flex flex-wrap items-start justify-between gap-3">
-                        <div><h2 className="text-base font-bold uppercase">Statistik Pengunjung Web</h2><p className="text-xs text-gray-500">Tren traffic dan aktivitas kunjungan portal web TransGIS harian</p></div>
-                        <div className="flex gap-1 rounded-lg bg-gray-100 p-1 text-xs font-medium"><span className="rounded bg-white px-3 py-1 font-bold shadow-sm">7 Hari</span><span className="px-3 py-1 text-gray-500">30 Hari</span><span className="px-3 py-1 text-gray-500">Bulan Ini</span></div>
+                        <div>
+                            <h2 className="font-pixel text-3xl font-semibold text-[#1B3A8C]">Statistik Pengunjung</h2>
+                            <p className="mt-1 text-xs leading-5 text-gray-500">Kunjungan dan pengunjung unik portal publik TransGIS, tujuh hari terakhir.</p>
+                        </div>
+                        <span className="border-2 border-[#12233F] bg-[#F97316] px-3 py-1 text-xs font-extrabold text-[#12233F]">7 hari</span>
                     </div>
-                    <p className="mt-5 mb-3 text-xs"><span className="inline-block w-3 h-3 bg-blue-600 mr-2 align-middle" /><b>Pengunjung Web (Kunjungan Portal)</b>{d.visitors.total > 0 && <span className="text-gray-400"> • Rata-rata {(d.series.reduce((a, s) => a + s[1], 0) / d.series.length).toFixed(1)} sesi per hari</span>}</p>
-                    {d.visitors.total > 0 ? (
+
+                    <p className="mb-3 mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs">
+                        <span className="flex items-center gap-2"><span className="inline-block h-3 w-6 border-b-[3px] border-[#1B3A8C]" /><b>Kunjungan</b></span>
+                        <span className="flex items-center gap-2"><span className="inline-block h-3 w-6 border-b-[3px] border-dashed border-[#F97316]" /><b>Pengunjung unik</b></span>
+                        {visits.total > 0 && <span className="text-gray-500">Rata-rata {(visits.total / Math.max(1, d.series.length)).toFixed(1)} kunjungan per hari</span>}
+                    </p>
+
+                    {hasData ? (
                         <>
                             <Chart series={d.series} />
-                            <p className="mt-3 pt-3 border-t border-gray-200 text-xs text-gray-600 flex gap-2"><Icon name="trend" className="w-4 h-4 text-blue-600 shrink-0" />Kunjungan tertinggi terjadi pada hari {peak[0]} ({peak[1]} sesi/hari).</p>
+                            <p className="mt-3 flex gap-2 border-t-2 border-[#12233F]/10 pt-3 text-xs leading-5 text-gray-600"><Icon name="trend" className="h-4 w-4 shrink-0 text-[#F97316]" />Kunjungan tertinggi terjadi pada {peak[0]} dengan {peak[1]} kunjungan.</p>
                         </>
                     ) : (
-                        <p className="py-10 text-center text-sm text-gray-500">Belum ada data kunjungan portal. Angka akan terisi otomatis saat halaman publik dikunjungi.</p>
+                        <p className="border-2 border-dashed border-[#12233F]/25 bg-[#F7F4EA] px-4 py-10 text-center text-sm leading-6 text-gray-500">Belum ada kunjungan portal. Grafik terisi otomatis saat halaman publik dibuka.</p>
+                    )}
+
+                    {visits.total > 0 && unique.total === 0 && (
+                        <p className="mt-3 border-l-4 border-[#F97316] bg-[#F7F4EA] px-3 py-2 text-xs leading-5 text-gray-600">Pengunjung unik belum terisi karena belum ada pengunjung yang menyetujui cookie.</p>
                     )}
                 </section>
 
-                <section className="bg-white rounded-2xl border border-gray-200 p-5">
-                    <h2 className="flex items-center gap-3 font-bold"><span className="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center"><Icon name="route" /></span>Riwayat Rute</h2>
+                <section className="border-2 border-[#12233F] bg-white p-5 shadow-[4px_4px_0_#12233F]">
+                    <h2 className="flex items-center gap-3 font-pixel text-3xl font-semibold text-[#1B3A8C]"><span className="grid h-10 w-10 place-items-center border-2 border-[#12233F] bg-[#F97316] text-[#12233F]"><Icon name="route" /></span>Riwayat Rute</h2>
                     {d.history.length ? (
                         <ul className="mt-5 space-y-3">
                             {d.history.map((h) => (
-                                <li key={h.title} className="rounded-xl bg-slate-50 border border-gray-100 p-3.5">
-                                    <div className="flex items-start justify-between gap-2"><p className="text-sm font-bold leading-snug">{h.title}</p><span className={`shrink-0 text-[11px] font-semibold border rounded-full px-2 py-0.5 ${TYPE[h.type]}`}>{h.type}</span></div>
-                                    <p className="mt-1.5 text-xs text-gray-500 leading-relaxed">{h.note}</p>
+                                <li key={h.title} className="border-2 border-[#12233F]/15 bg-[#F7F4EA] p-3.5">
+                                    <div className="flex items-start justify-between gap-2">
+                                        <p className="text-sm font-extrabold leading-snug text-[#12233F]">{h.title}</p>
+                                        <span className={`shrink-0 border px-2 py-0.5 text-[10px] font-extrabold ${TYPE[h.type]}`}>{h.type}</span>
+                                    </div>
+                                    <p className="mt-2 text-xs leading-5 text-gray-600">{h.note}</p>
                                 </li>
                             ))}
                         </ul>
                     ) : (
-                        <p className="mt-5 text-sm text-gray-500">Belum ada aktivitas perubahan rute.</p>
+                        <p className="mt-5 border-2 border-dashed border-[#12233F]/25 bg-[#F7F4EA] p-4 text-sm leading-6 text-gray-500">Belum ada aktivitas perubahan rute.</p>
                     )}
-                    <button type="button" className="mt-4 w-full h-10 rounded-xl bg-blue-50 text-blue-700 text-xs font-bold hover:bg-blue-100 transition-colors">Lihat semua perubahan ›</button>
                 </section>
             </div>
         </div>

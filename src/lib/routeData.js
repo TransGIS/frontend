@@ -3,6 +3,7 @@
    Dipakai oleh Maps.jsx dan section "Info Tarif & Rute" di HomePage.
    ──────────────────────────────────────────────────────────── */
 import { dist, SPEED } from './routing'
+import { registerVisitor } from './consent'
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 const FARE = { biskita: 'Rp 4.000', angkot: 'Rp 5.000-7.000' }
@@ -43,9 +44,19 @@ function toRoute(kind, doc, idx) {
 
 let cache = null
 
-/** Catat satu kunjungan halaman publik ke koleksi page_views (fire-and-forget). */
+/* Satu kunjungan = satu kali dokumen dimuat (satu tab). Berpindah halaman di
+   dalam SPA tidak menambah hitungan, mis. Beranda → Peta tetap 1. Refresh atau
+   membuka tab baru mengeksekusi ulang modul ini, jadi dihitung sebagai
+   kunjungan baru. Flag ini juga mencegah hitungan ganda dari StrictMode. */
+let counted = false
+
+/** Catat satu kunjungan halaman publik ke koleksi page_views (fire-and-forget),
+    sekaligus mendaftarkan pengunjung unik bila cookie sudah disetujui. */
 export function trackPageView() {
+    if (counted) return
+    counted = true
     fetch(`${API}/api/public/page-view`, { method: 'POST' }).catch(() => {})
+    registerVisitor()
 }
 
 const walkCache = new Map()
