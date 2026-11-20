@@ -10,7 +10,7 @@ import { searchPlaces } from '../lib/geocode'
  * - onFocus          : opsional, dipanggil saat input difokuskan
  * - onClear          : opsional, bila ada menampilkan tombol × untuk menghapus
  */
-function PlaceInput({ value, selected, onChange, onSelect, onSubmit, onFocus, onClear, placeholder, pinClass = 'text-[#F97316]', className = '' }) {
+function PlaceInput({ id, value, selected, onChange, onSelect, onSubmit, onFocus, onClear, placeholder, pinClass = 'text-[#F97316]', className = '' }) {
     const [open, setOpen] = useState(false)
     const [items, setItems] = useState([])
     const [state, setState] = useState('idle') // idle | loading | done | error
@@ -56,10 +56,14 @@ function PlaceInput({ value, selected, onChange, onSelect, onSubmit, onFocus, on
     return (
         <div className={`relative ${className}`}>
             <div
-                className={`flex items-center border rounded-lg px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 focus-within:ring-2 focus-within:ring-[#1B3A8C] focus-within:border-transparent transition-all ${selected ? 'border-green-300' : 'border-gray-200'}`}
+                className={`flex min-h-[50px] items-center rounded-lg border-2 bg-white px-3.5 transition-colors focus-within:border-[#1B3A8C] focus-within:ring-2 focus-within:ring-[#1B3A8C]/15 ${selected ? 'border-[#16A34A]' : 'border-[#12233F]/25'}`}
             >
-                <span className={`${pinClass} mr-2.5 sm:mr-3 text-base shrink-0`}>📍</span>
+                <svg viewBox="0 0 24 24" className={`${pinClass} mr-3 h-5 w-5 shrink-0`} fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                    <path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" />
+                    <circle cx="12" cy="10" r="2.5" />
+                </svg>
                 <input
+                    id={id}
                     type="text"
                     value={value}
                     onChange={(e) => { onChange(e.target.value); setOpen(true) }}
@@ -71,11 +75,15 @@ function PlaceInput({ value, selected, onChange, onSelect, onSubmit, onFocus, on
                     role="combobox"
                     aria-expanded={showPanel}
                     aria-autocomplete="list"
-                    className="flex-1 bg-transparent text-gray-700 text-xs sm:text-sm outline-none placeholder-gray-400 min-w-0"
+                    className="min-w-0 flex-1 bg-transparent text-sm font-medium text-[#12233F] outline-none placeholder:font-normal placeholder:text-gray-400"
                 />
-                {selected && <span className="text-green-600 text-xs font-bold ml-2 shrink-0" aria-label="Lokasi dipilih">✓</span>}
+                {selected && (
+                    <svg viewBox="0 0 24 24" className="ml-2 h-5 w-5 shrink-0 text-[#16A34A]" fill="none" stroke="currentColor" strokeWidth="2.5" aria-label="Lokasi dipilih" role="img">
+                        <path d="M5 12l4 4L19 6" />
+                    </svg>
+                )}
                 {onClear && (value || selected) && (
-                    <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={onClear} aria-label="Hapus lokasi" className="text-gray-400 hover:text-gray-700 ml-2 shrink-0 text-sm font-bold">×</button>
+                    <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={onClear} aria-label="Hapus lokasi" className="ml-2 shrink-0 px-1 text-lg font-bold text-gray-400 hover:text-gray-700">×</button>
                 )}
             </div>
 

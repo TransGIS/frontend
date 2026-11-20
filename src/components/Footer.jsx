@@ -1,94 +1,68 @@
+const NAV_ITEMS = [
+    { href: '/', label: 'Beranda' },
+    { href: '/maps', label: 'Peta perjalanan' },
+    { href: '/#tentang', label: 'Tentang proyek' },
+    { href: '/#tarif', label: 'Info tarif & rute' },
+]
+
 function Footer() {
     return (
-        <footer className="bg-white border-t border-gray-100 py-10 sm:py-12 px-4 sm:px-6 lg:px-8">
-            <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 md:gap-10">
-                {/* Brand column */}
-                <div className="sm:col-span-2 lg:col-span-1">
-                    <a href="/" className="inline-flex items-center gap-2 mb-3 sm:mb-4">
-                        <span className="text-2xl">📍</span>
-                        <span className="text-xl font-bold">
-                            <span className="text-[#1B3A8C]">Trans</span>
-                            <span className="text-[#F97316]">GIS</span>
+        <footer className="site-footer border-t-2 border-[#12233F] bg-[#12233F] text-[#F7F4EA]">
+            <div className="mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:px-6 sm:py-14 md:grid-cols-[1.35fr_0.75fr_1fr] lg:px-8">
+                <div className="max-w-md">
+                    <a href="/" className="inline-flex items-center gap-3" aria-label="TransGIS, kembali ke beranda">
+                        <span className="grid h-10 w-10 place-items-center border-2 border-[#F7F4EA] bg-[#1B3A8C] shadow-[3px_3px_0_#F97316]">
+                            <svg viewBox="0 0 24 24" className="h-5 w-5 text-white" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                                <path d="M5 17V7c0-2 2-3 7-3s7 1 7 3v10M5 13h14M8 8h8M8 17v3M16 17v3" />
+                                <path d="M8 16h.01M16 16h.01" strokeWidth="3" />
+                            </svg>
+                        </span>
+                        <span className="font-pixel text-3xl font-semibold leading-none">
+                            <span className="text-white">Trans</span><span className="text-[#F97316]">GIS</span>
                         </span>
                     </a>
-                    <p className="text-gray-500 text-xs sm:text-sm leading-relaxed max-w-sm">
-                        Platform Sistem Informasi Geografis (GIS) navigasi transportasi
-                        publik Kota Bogor yang memberikan kepastian rute, tarif, dan
-                        panduan perjalanan cerdas terintegrasi.
+                    <p className="mt-5 text-sm leading-7 text-[#F7F4EA]/70">
+                        Panduan perjalanan BisKita, angkot, dan jalan kaki di Kota Bogor—dalam satu pencarian.
                     </p>
                 </div>
 
-                {/* Navigasi Utama */}
-                <div>
-                    <h3 className="text-xs font-bold text-gray-800 uppercase tracking-wider mb-3 sm:mb-4">
-                        Navigasi Utama
-                    </h3>
-                    <ul className="space-y-2.5 sm:space-y-3">
-                        {[
-                            'Beranda',
-                            'Peta Rute Interaktif',
-                            'Info Tarif',
-                            'Jadwal BisKita',
-                            'Daftar Trayek Angkot',
-                        ].map((item) => (
-                            <li key={item}>
+                <nav aria-label="Navigasi footer">
+                    <h2 className="font-pixel text-2xl font-semibold text-white">Jelajahi</h2>
+                    <ul className="mt-4 space-y-3">
+                        {NAV_ITEMS.map((item) => (
+                            <li key={item.href}>
                                 <a
-                                    href="#"
-                                    className="text-xs sm:text-sm text-gray-500 hover:text-[#1B3A8C] transition-colors"
+                                    href={item.href}
+                                    className="inline-block text-sm text-[#F7F4EA]/75 underline decoration-transparent underline-offset-4 transition-colors hover:text-[#F97316] hover:decoration-[#F97316] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]"
                                 >
-                                    {item}
+                                    {item.label}
                                 </a>
                             </li>
                         ))}
                     </ul>
-                </div>
+                </nav>
 
-                {/* Pusat Mobilitas */}
-                <div>
-                    <h3 className="text-xs font-bold text-gray-800 uppercase tracking-wider mb-3 sm:mb-4">
-                        Pusat Mobilitas
-                    </h3>
-                    <ul className="space-y-2.5 sm:space-y-3">
-                        {[
-                            'Kebun Raya Bogor',
-                            'Terminal Baranangsiang',
-                            'Terminal Bubulak',
-                            'Kampus IPB University',
-                        ].map((item) => (
-                            <li key={item}>
-                                <a
-                                    href="#"
-                                    className="text-xs sm:text-sm text-gray-500 hover:text-[#1B3A8C] transition-colors"
-                                >
-                                    {item}
-                                </a>
-                            </li>
-                        ))}
-                    </ul>
+                <div className="md:justify-self-end">
+                    <h2 className="font-pixel text-2xl font-semibold text-white">Mau ke mana?</h2>
+                    <p className="mt-3 max-w-xs text-sm leading-6 text-[#F7F4EA]/70">
+                        Pilih asal dan tujuan. TransGIS bantu susun rutenya.
+                    </p>
+                    <a
+                        href="/maps"
+                        className="mt-5 inline-flex items-center gap-3 border-2 border-[#F7F4EA] bg-[#F97316] px-5 py-3 text-sm font-extrabold text-[#12233F] shadow-[4px_4px_0_#F7F4EA] transition-colors hover:bg-[#F7F4EA] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] focus-visible:ring-offset-2 focus-visible:ring-offset-[#12233F]"
+                    >
+                        Buka peta perjalanan
+                        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
+                            <path d="M5 12h14M13 6l6 6-6 6" />
+                        </svg>
+                    </a>
                 </div>
+            </div>
 
-                {/* Bantuan & Regulasi */}
-                <div>
-                    <h3 className="text-xs font-bold text-gray-800 uppercase tracking-wider mb-3 sm:mb-4">
-                        Bantuan &amp; Regulasi
-                    </h3>
-                    <ul className="space-y-2.5 sm:space-y-3">
-                        {[
-                            'Pusat Pengaduan Trayek',
-                            'Dishub Kota Bogor',
-                            'Kebijakan Privasi',
-                            'Syarat & Ketentuan',
-                        ].map((item) => (
-                            <li key={item}>
-                                <a
-                                    href="#"
-                                    className="text-xs sm:text-sm text-gray-500 hover:text-[#1B3A8C] transition-colors"
-                                >
-                                    {item}
-                                </a>
-                            </li>
-                        ))}
-                    </ul>
+            <div className="border-t border-[#F7F4EA]/15">
+                <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-5 text-xs leading-5 text-[#F7F4EA]/55 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
+                    <p>© {new Date().getFullYear()} TransGIS. Peta dari OpenStreetMap.</p>
+                    <p>Waktu dan tarif perjalanan merupakan estimasi.</p>
                 </div>
             </div>
         </footer>

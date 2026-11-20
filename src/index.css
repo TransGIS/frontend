@@ -13,3 +13,76 @@
 @media (min-width: 1024px) {
   aside { max-height: none !important; }
 }
+
+/* Landing TransGIS: tipografi pixel dan bahasa visual jalan */
+.font-pixel {
+  font-family: 'Pixelify Sans', monospace;
+}
+
+.landing-page,
+.site-footer {
+  font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+}
+
+.landing-page {
+  background: #F7F4EA;
+  color: #12233F;
+}
+
+.landing-page #tentang,
+.landing-page #tarif {
+  background-color: #F7F4EA;
+}
+
+.pixel-panel {
+  border: 2px solid #12233F;
+  box-shadow: 6px 6px 0 #12233F;
+}
+
+.road-strip {
+  height: 46px;
+  background: #94A3B8;
+  border-top: 2px solid #12233F;
+  border-bottom: 2px solid #12233F;
+}
+
+.road-strip::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 3px;
+  transform: translateY(-50%);
+  background: repeating-linear-gradient(to right, #FFFFFF 0 30px, transparent 30px 52px);
+}
+
+.hero-search,
+.hero-search * {
+  border-radius: 0 !important;
+}
+
+.landing-page #tarif h2 {
+  font-family: 'Pixelify Sans', monospace;
+  font-weight: 600;
+}
+
+.landing-page #tarif article {
+  border: 2px solid #12233F;
+  border-radius: 0;
+  box-shadow: 4px 4px 0 #12233F;
+}
+
+.landing-page #tarif article span,
+.landing-page #tarif nav button {
+  border-radius: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-page *,
+  .landing-page *::before,
+  .landing-page *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}

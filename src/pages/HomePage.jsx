@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import RouteInfoSection from '../components/RouteInfoSection'
 import PlaceInput from '../components/PlaceInput'
+import { PixelTransitScene, RoadMarker } from '../components/PixelRoad'
 import { mapsUrl, searchPlaces } from '../lib/geocode'
 import { trackPageView } from '../lib/routeData'
 import heroBg from '../../../hero-section.jpeg'
@@ -11,110 +12,89 @@ import heroBg from '../../../hero-section.jpeg'
 
 const JOURNEY_STEPS = [
     {
-        marker: 'Asal',
-        title: 'Tentukan titik berangkat',
-        text: 'Ketik nama tempat atau pilih titik langsung pada peta.',
+        marker: '01',
+        title: 'Tentukan asal',
+        text: 'Ketik tempat atau tandai peta.',
         color: 'bg-[#F97316]',
     },
     {
-        marker: 'Naik',
-        title: 'Pilih BisKita atau angkot',
-        text: 'Bandingkan pilihan rute, perkiraan waktu tempuh, dan tarif.',
+        marker: '02',
+        title: 'Pilih kendaraan',
+        text: 'Bandingkan BisKita dan angkot.',
         color: 'bg-[#1B3A8C]',
     },
     {
-        marker: 'Pindah',
-        title: 'Lihat titik turun dan transit',
-        text: 'Ikuti saran perpindahan bila perjalanan membutuhkan lebih dari satu kendaraan.',
-        color: 'bg-[#1B3A8C]',
+        marker: '03',
+        title: 'Turun & transit',
+        text: 'Lihat titik pindah dengan jelas.',
+        color: 'bg-[#F97316]',
     },
     {
-        marker: 'Tujuan',
-        title: 'Lanjutkan dengan jalan kaki',
-        text: 'Lihat jalur kaki yang menghubungkan titik turun dengan tujuan akhir.',
+        marker: '04',
+        title: 'Sampai tujuan',
+        text: 'Ikuti jalur jalan kaki terakhir.',
         color: 'bg-[#16A34A]',
     },
 ]
 
 function ProjectInfoSection() {
     return (
-        <section id="tentang" aria-labelledby="tentang-transgis-title" className="scroll-mt-16 bg-white px-4 sm:px-6 lg:px-8 py-14 sm:py-20">
-            <div className="max-w-6xl mx-auto">
-                <div className="grid lg:grid-cols-12 gap-12 lg:gap-16 items-start">
-                    <div className="lg:col-span-5 lg:pt-2">
-                        <p className="text-sm font-semibold text-[#1B3A8C]">Tentang TransGIS</p>
-                        <h2 id="tentang-transgis-title" className="mt-3 max-w-md text-3xl sm:text-4xl font-extrabold leading-[1.15] tracking-tight text-[#12233F]">
-                            Bukan sekadar peta trayek. Satu rencana sampai tujuan.
+        <section id="tentang" aria-labelledby="tentang-transgis-title" className="scroll-mt-20 px-4 py-14 sm:px-6 sm:py-16 lg:px-8">
+            <div className="mx-auto max-w-6xl">
+                <div className="grid items-center gap-10 lg:grid-cols-12 lg:gap-14">
+                    <div className="lg:col-span-5">
+                        <p className="font-pixel text-xl font-semibold text-[#1B3A8C]">Tentang TransGIS</p>
+                        <h2 id="tentang-transgis-title" className="mt-3 max-w-md font-pixel text-4xl font-semibold leading-[1.08] text-[#12233F] sm:text-5xl">
+                            Satu pencarian. Sampai tujuan.
                         </h2>
-                        <p className="mt-5 max-w-lg text-base leading-7 text-gray-600">
-                            TransGIS adalah proyek Sistem Informasi Geografis berbasis web untuk transportasi publik Kota Bogor. BisKita Trans Pakuan dan trayek angkot dipertemukan dalam satu pencarian perjalanan.
-                        </p>
-                        <p className="mt-5 max-w-lg border-l-2 border-[#F97316] pl-4 text-base font-medium leading-7 text-[#12233F]">
-                            Naik apa, turun di mana, dan bagaimana melanjutkan perjalanan—dijawab dalam satu alur.
-                        </p>
-                        <p className="mt-4 max-w-lg text-base leading-7 text-gray-600">
-                            Proyek ini dibuat untuk membantu warga dan pengunjung yang tidak hafal setiap trayek agar dapat menyiapkan perjalanan dengan lebih yakin.
+                        <p className="mt-5 max-w-md text-[15px] leading-7 text-gray-600">
+                            TransGIS memadukan BisKita, angkot, dan jalan kaki untuk membantu warga Bogor memilih rute, titik transit, serta estimasi waktu dan tarif dalam satu pencarian.
                         </p>
                         <a
                             href="/maps"
-                            className="inline-block mt-7 border-b-2 border-[#F97316] pb-1 text-sm font-bold text-[#1B3A8C] hover:text-[#F97316] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1B3A8C] focus-visible:ring-offset-4 transition-colors"
+                            className="mt-6 inline-flex items-center gap-2 border-2 border-[#12233F] bg-white px-5 py-3 text-sm font-bold text-[#1B3A8C] shadow-[4px_4px_0_#12233F] transition-colors hover:bg-[#F97316] hover:text-[#12233F] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1B3A8C] focus-visible:ring-offset-4"
                         >
                             Rencanakan perjalanan
+                            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                                <path d="M5 12h14M13 6l6 6-6 6" />
+                            </svg>
                         </a>
                     </div>
 
-                    <div className="lg:col-span-7 lg:border-l lg:border-slate-200 lg:pl-16">
-                        <h3 className="border-b border-slate-200 pb-4 text-lg font-bold text-[#12233F]">
-                            Satu pencarian, empat keputusan perjalanan
-                        </h3>
-                        <ol className="mt-7">
-                            {JOURNEY_STEPS.map((step, index) => (
-                                <li key={step.title} className="relative grid grid-cols-[1rem_1fr] gap-4 pb-7 last:pb-0">
-                                    {index < JOURNEY_STEPS.length - 1 && (
-                                        <span aria-hidden="true" className="absolute left-[5px] top-4 bottom-0 w-px bg-slate-300" />
-                                    )}
-                                    <span aria-hidden="true" className={`relative mt-1.5 h-3 w-3 rounded-full ring-4 ring-white ${step.color}`} />
-                                    <div>
-                                        <p className="text-xs font-semibold text-gray-500">{step.marker}</p>
-                                        <h4 className="mt-1 text-base font-bold text-gray-900">{step.title}</h4>
-                                        <p className="mt-1.5 max-w-xl text-sm leading-6 text-gray-600">{step.text}</p>
-                                    </div>
-                                </li>
-                            ))}
-                        </ol>
+                    <div className="lg:col-span-7">
+                        <PixelTransitScene />
                     </div>
                 </div>
 
-                <div className="mt-14 grid md:grid-cols-3 gap-x-10 gap-y-8 border-t border-slate-200 pt-8">
-                    <article>
-                        <h3 className="text-base font-bold text-[#12233F]">Dua moda, satu rencana</h3>
-                        <p className="mt-2 text-sm leading-6 text-gray-600">
-                            BisKita dan angkot dapat dipadukan dalam satu hasil pencarian, termasuk titik transit dan lanjutan jalan kaki.
-                        </p>
-                    </article>
-                    <article>
-                        <h3 className="text-base font-bold text-[#12233F]">Data yang bisa dirawat</h3>
-                        <p className="mt-2 text-sm leading-6 text-gray-600">
-                            Informasi trayek dikelola melalui dasbor admin agar dapat diperbarui ketika layanan berubah.
-                        </p>
-                    </article>
-                    <article>
-                        <h3 className="text-base font-bold text-[#12233F]">Estimasi yang jelas batasnya</h3>
-                        <p className="mt-2 text-sm leading-6 text-gray-600">
-                            Waktu dan tarif adalah perkiraan, bukan pelacakan kendaraan langsung. Lalu lintas dan kebijakan operator dapat mengubah perjalanan.
-                        </p>
-                    </article>
+                <div className="mt-14 border-2 border-[#12233F] bg-white shadow-[5px_5px_0_#12233F]">
+                    <div className="border-b-2 border-[#12233F] px-5 py-4 sm:px-6">
+                        <h3 className="font-pixel text-2xl font-semibold text-[#12233F] sm:text-3xl">
+                            Empat langkah, satu rute
+                        </h3>
+                    </div>
+                    <ol className="grid sm:grid-cols-2 lg:grid-cols-4">
+                        {JOURNEY_STEPS.map((step, index) => (
+                            <li
+                                key={step.title}
+                                className={`border-[#12233F] p-5 ${index < 3 ? 'border-b-2 lg:border-b-0 lg:border-r-2' : ''} ${index === 2 ? 'sm:border-b-0' : ''} ${index % 2 === 0 ? 'sm:border-r-2' : ''}`}
+                            >
+                                <div className="flex items-start gap-4">
+                                    <span className={`grid h-10 w-10 shrink-0 place-items-center border-2 border-[#12233F] font-pixel text-lg font-semibold text-white ${step.color}`}>
+                                        {step.marker}
+                                    </span>
+                                    <div>
+                                        <h4 className="text-sm font-bold text-[#12233F]">{step.title}</h4>
+                                        <p className="mt-1 text-sm leading-6 text-gray-600">{step.text}</p>
+                                    </div>
+                                </div>
+                            </li>
+                        ))}
+                    </ol>
                 </div>
 
-                <div className="mt-10 border-t border-slate-200 pt-5 grid gap-3 text-xs leading-5 text-gray-500 md:grid-cols-2 md:gap-10">
-                    <p>
-                        <span className="font-semibold text-gray-700">Teknologi: </span>
-                        React, Leaflet, OpenStreetMap, algoritma Dijkstra, Node.js, dan MongoDB.
-                    </p>
-                    <p>
-                        <span className="font-semibold text-gray-700">Sumber data: </span>
-                        Peta dan jalur pejalan kaki memanfaatkan OpenStreetMap; informasi trayek disimpan dalam database proyek.
-                    </p>
+                <div className="mt-5 grid gap-2 text-xs leading-5 text-gray-500 sm:grid-cols-2 sm:gap-8">
+                    <p>Waktu dan tarif merupakan estimasi, bukan pelacakan kendaraan langsung.</p>
+                    <p className="sm:text-right">Trayek tersimpan di database proyek; peta memakai OpenStreetMap.</p>
                 </div>
             </div>
         </section>
@@ -175,169 +155,200 @@ function HomePage() {
     }
 
     return (
-        <div className="flex flex-col font-sans bg-gray-50 text-gray-800">
+        <div className="landing-page flex flex-col">
             {/* ── HERO ── */}
             <section
-                className="bg-[#1A3FA0] bg-cover bg-center flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8 py-10 sm:py-14 lg:py-16 lg:min-h-[calc(100vh-4rem)] text-center"
+                className="relative flex min-h-[100svh] flex-col items-center justify-center bg-[#1A3FA0] bg-cover bg-center px-4 pb-20 pt-28 text-center sm:px-6 sm:pt-32 lg:px-8"
                 style={{ backgroundImage: `url(${heroBg})` }}
             >
                 {/* Heading */}
-                <h1 className="text-white text-3xl sm:text-4xl md:text-5xl font-extrabold leading-tight tracking-tight max-w-4xl [text-shadow:0_2px_18px_rgba(10,24,58,0.55)]">
+                <h1 className="max-w-5xl font-pixel text-4xl sm:text-5xl md:text-6xl font-semibold leading-[1.08] text-white [text-shadow:3px_3px_0_rgba(18,35,63,0.8)]">
                     Tentukan Perjalanan di Bogor{' '}
-                    <span className="whitespace-nowrap">
+                    <span className="mt-2 block whitespace-nowrap">
                         dengan <span className="text-[#1B3A8C]">Trans</span><span className="text-[#F97316]">GIS</span>
                     </span>
                 </h1>
-                <p className="text-white/95 text-sm sm:text-base md:text-lg max-w-2xl mt-3 sm:mt-4 leading-relaxed [text-shadow:0_1px_12px_rgba(10,24,58,0.5)]">
-                    Panduan navigasi cerdas terintegrasi: BisKita, Trayek Angkot,
-                    serta estimasi rute tercepat dan tarif akurat di Kota Bogor.
+                <p className="mt-4 max-w-2xl text-sm font-medium leading-6 text-white [text-shadow:0_2px_10px_rgba(10,24,58,0.8)] sm:text-base sm:leading-7">
+                    Cari rute BisKita dan angkot, lengkap dengan titik transit, jalan kaki, estimasi waktu, dan tarif.
                 </p>
 
                 {/* Search Card */}
-                <div className="bg-white rounded-2xl shadow-xl w-full max-w-xl mt-6 sm:mt-8 p-4 sm:p-6">
+                <div className="hero-search pixel-panel mt-8 w-full max-w-3xl bg-[#F7F4EA] p-4 text-left text-[#12233F] sm:p-6">
                     {/* Tab switcher */}
-                    <div className="flex justify-center mb-4 sm:mb-5">
-                        <div className="w-full sm:w-auto flex bg-gray-100 rounded-xl sm:rounded-full p-1 gap-1">
-                            <button
-                                type="button"
-                                onClick={() => setActiveTab('petunjuk')}
-                                className={`flex-1 sm:flex-initial px-3 sm:px-6 py-2 rounded-lg sm:rounded-full text-xs sm:text-sm font-semibold transition-all ${isPetunjuk
-                                    ? 'bg-[#1B3A8C] text-white shadow'
-                                    : 'text-gray-600 hover:text-gray-800'
-                                    }`}
-                            >
-                                Petunjuk Arah
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setActiveTab('trayek')}
-                                className={`flex-1 sm:flex-initial px-3 sm:px-6 py-2 rounded-lg sm:rounded-full text-xs sm:text-sm font-semibold transition-all ${isTrayek
-                                    ? 'bg-[#1B3A8C] text-white shadow'
-                                    : 'text-gray-600 hover:text-gray-800'
-                                    }`}
-                            >
-                                Trayek
-                            </button>
-                        </div>
+                    <div className="grid grid-cols-2 border-2 border-[#12233F] bg-white" role="tablist" aria-label="Jenis pencarian">
+                        <button
+                            type="button"
+                            role="tab"
+                            id="tab-petunjuk"
+                            aria-selected={isPetunjuk}
+                            aria-controls="home-search-panel"
+                            onClick={() => setActiveTab('petunjuk')}
+                            className={`border-r-2 border-[#12233F] px-3 py-3 text-sm font-bold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#F97316] ${isPetunjuk
+                                ? 'bg-[#1B3A8C] text-white'
+                                : 'bg-white text-gray-600 hover:bg-[#EAF0FF] hover:text-[#1B3A8C]'
+                                }`}
+                        >
+                            Petunjuk Arah
+                        </button>
+                        <button
+                            type="button"
+                            role="tab"
+                            id="tab-trayek"
+                            aria-selected={isTrayek}
+                            aria-controls="home-search-panel"
+                            onClick={() => setActiveTab('trayek')}
+                            className={`px-3 py-3 text-sm font-bold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#F97316] ${isTrayek
+                                ? 'bg-[#1B3A8C] text-white'
+                                : 'bg-white text-gray-600 hover:bg-[#EAF0FF] hover:text-[#1B3A8C]'
+                                }`}
+                        >
+                            Cari Trayek
+                        </button>
                     </div>
 
                     {/* Mode selector (only on Trayek tab) */}
                     {isTrayek && (
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-4 text-left">
-                            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">
-                                Pilihan Moda:
-                            </span>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full sm:w-auto flex-1">
+                        <fieldset className="mt-5">
+                            <legend className="text-sm font-extrabold text-[#12233F]">Pilih moda</legend>
+                            <div className="mt-2 grid grid-cols-2 gap-2 sm:gap-3">
                                 <button
                                     type="button"
+                                    aria-pressed={activeMode === 'biskita'}
                                     onClick={() => { setActiveMode('biskita'); setTujuan('') }}
-                                    className={`px-3 sm:px-4 py-2 sm:py-1.5 rounded-lg sm:rounded-full text-xs sm:text-sm font-medium border transition-all text-center ${activeMode === 'biskita'
-                                        ? 'bg-[#1B3A8C] text-white border-[#1B3A8C]'
-                                        : 'bg-white text-gray-700 border-gray-300 hover:border-[#1B3A8C]'
+                                    className={`relative flex min-h-[68px] items-center justify-center gap-2 border-2 px-3 py-3 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] sm:justify-start sm:gap-3 ${activeMode === 'biskita'
+                                        ? 'border-[#12233F] bg-[#1B3A8C] text-white shadow-[3px_3px_0_#F97316]'
+                                        : 'border-[#12233F]/25 bg-white text-gray-600 hover:border-[#1B3A8C] hover:text-[#1B3A8C]'
                                         }`}
                                 >
-                                    BisKita Trans Pakuan
+                                    <svg viewBox="0 0 24 24" className="h-6 w-6 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+                                        <path d="M5 17V7c0-2 2-3 7-3s7 1 7 3v10M5 13h14M8 8h8M8 17v3M16 17v3" />
+                                        <path d="M8 16h.01M16 16h.01" strokeWidth="3" />
+                                    </svg>
+                                    <span className="text-left">
+                                        <span className="block text-sm font-extrabold">BisKita</span>
+                                        <span className="mt-0.5 hidden text-xs opacity-75 sm:block">Trans Pakuan</span>
+                                    </span>
+                                    {activeMode === 'biskita' && (
+                                        <svg viewBox="0 0 24 24" className="absolute right-1.5 top-1.5 h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+                                            <path d="M5 12l4 4L19 6" />
+                                        </svg>
+                                    )}
                                 </button>
                                 <button
                                     type="button"
+                                    aria-pressed={activeMode === 'angkot'}
                                     onClick={() => { setActiveMode('angkot'); setTujuan('') }}
-                                    className={`px-3 sm:px-4 py-2 sm:py-1.5 rounded-lg sm:rounded-full text-xs sm:text-sm font-medium border transition-all text-center ${activeMode === 'angkot'
-                                        ? 'bg-[#1B3A8C] text-white border-[#1B3A8C]'
-                                        : 'bg-white text-gray-700 border-gray-300 hover:border-[#1B3A8C]'
+                                    className={`relative flex min-h-[68px] items-center justify-center gap-2 border-2 px-3 py-3 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] sm:justify-start sm:gap-3 ${activeMode === 'angkot'
+                                        ? 'border-[#12233F] bg-[#1B3A8C] text-white shadow-[3px_3px_0_#F97316]'
+                                        : 'border-[#12233F]/25 bg-white text-gray-600 hover:border-[#1B3A8C] hover:text-[#1B3A8C]'
                                         }`}
                                 >
-                                    Angkot Bogor (01–32)
+                                    <svg viewBox="0 0 24 24" className="h-6 w-6 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+                                        <path d="M4 16V8l2-4h12l2 4v8M4 11h16M7 16v2M17 16v2M7 8h10" />
+                                        <path d="M7 14h.01M17 14h.01" strokeWidth="3" />
+                                    </svg>
+                                    <span className="text-left">
+                                        <span className="block text-sm font-extrabold">Angkot</span>
+                                        <span className="mt-0.5 hidden text-xs opacity-75 sm:block">Trayek 01–32</span>
+                                    </span>
+                                    {activeMode === 'angkot' && (
+                                        <svg viewBox="0 0 24 24" className="absolute right-1.5 top-1.5 h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+                                            <path d="M5 12l4 4L19 6" />
+                                        </svg>
+                                    )}
                                 </button>
                             </div>
-                        </div>
+                        </fieldset>
                     )}
 
                     {/* Input fields */}
-                    <div className="flex flex-col gap-4 text-left">
-                        {/* Asal (only for Petunjuk Arah) */}
-                        {isPetunjuk && (
-                            <div>
-                                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
-                                    Asal
-                                </label>
-                                <PlaceInput
-                                    value={asalText}
-                                    selected={asalPlace}
-                                    onChange={(t) => { setAsalText(t); setAsalPlace(null); setFormError('') }}
-                                    onSelect={(p) => { setAsalPlace(p); setAsalText(p.name); setFormError('') }}
-                                    onSubmit={goDirections}
-                                    pinClass="text-[#16A34A]"
-                                    placeholder="Pilih lokasi asal... (cth: Stasiun Bogor)"
-                                />
-                            </div>
-                        )}
+                    <div
+                        id="home-search-panel"
+                        role="tabpanel"
+                        aria-labelledby={isTrayek ? 'tab-trayek' : 'tab-petunjuk'}
+                        className="mt-5 text-left"
+                    >
+                        <div className={`grid gap-4 ${isPetunjuk ? 'sm:grid-cols-2' : ''}`}>
+                            {isPetunjuk && (
+                                <div>
+                                    <label htmlFor="home-asal" className="mb-2 block text-sm font-extrabold text-[#12233F]">
+                                        Dari mana?
+                                    </label>
+                                    <PlaceInput
+                                        id="home-asal"
+                                        value={asalText}
+                                        selected={asalPlace}
+                                        onChange={(t) => { setAsalText(t); setAsalPlace(null); setFormError('') }}
+                                        onSelect={(p) => { setAsalPlace(p); setAsalText(p.name); setFormError('') }}
+                                        onSubmit={goDirections}
+                                        pinClass="text-[#16A34A]"
+                                        placeholder="Contoh: Stasiun Bogor"
+                                    />
+                                </div>
+                            )}
 
-                        {/* Tujuan */}
-                        <div>
-                            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
-                                Tujuan
-                            </label>
-                            <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
+                            <div>
+                                <label htmlFor="home-tujuan" className="mb-2 block text-sm font-extrabold text-[#12233F]">
+                                    {isTrayek ? 'Cari trayek' : 'Mau ke mana?'}
+                                </label>
                                 {isTrayek ? (
-                                    <div className="flex-1 flex items-center border border-gray-200 rounded-lg px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 focus-within:ring-2 focus-within:ring-[#1B3A8C] focus-within:border-transparent transition-all">
-                                        <span className="text-[#F97316] mr-2.5 sm:mr-3 text-base shrink-0">📍</span>
+                                    <div className="flex min-h-[50px] items-center rounded-lg border-2 border-[#12233F]/25 bg-white px-3.5 transition-colors focus-within:border-[#1B3A8C] focus-within:ring-2 focus-within:ring-[#1B3A8C]/15">
+                                        <svg viewBox="0 0 24 24" className="mr-3 h-5 w-5 shrink-0 text-[#F97316]" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                                            <circle cx="11" cy="11" r="7" />
+                                            <path d="m20 20-4-4" />
+                                        </svg>
                                         <input
+                                            id="home-tujuan"
                                             type="text"
                                             value={tujuan}
                                             onChange={(e) => setTujuan(e.target.value)}
                                             onKeyDown={(e) => { if (e.key === 'Enter') scrollToTarif() }}
-                                            placeholder={activeMode === 'biskita' ? 'Pilih koridor... (cth: K5)' : 'Pilih trayek angkot... (cth: 01)'}
-                                            className="flex-1 bg-transparent text-gray-700 text-xs sm:text-sm outline-none placeholder-gray-400 min-w-0"
+                                            placeholder={activeMode === 'biskita' ? 'Nomor koridor atau lokasi' : 'Nomor trayek atau lokasi'}
+                                            className="min-w-0 flex-1 bg-transparent text-sm font-medium text-[#12233F] outline-none placeholder:font-normal placeholder:text-gray-400"
                                         />
                                     </div>
                                 ) : (
                                     <PlaceInput
-                                        className="flex-1"
+                                        id="home-tujuan"
                                         value={tujuanText}
                                         selected={tujuanPlace}
                                         onChange={(t) => { setTujuanText(t); setTujuanPlace(null); setFormError('') }}
                                         onSelect={(p) => { setTujuanPlace(p); setTujuanText(p.name); setFormError('') }}
                                         onSubmit={goDirections}
-                                        placeholder="Pilih tujuan... (cth: Kebun Raya)"
+                                        placeholder="Contoh: Kebun Raya"
                                     />
                                 )}
-
-                                {/* Cari Rute button */}
-                                <button
-                                    type="button"
-                                    onClick={isTrayek ? scrollToTarif : goDirections}
-                                    disabled={searching}
-                                    className="w-full sm:w-auto flex items-center justify-center gap-2 bg-[#16A34A] hover:bg-[#15803D] active:scale-[0.98] disabled:opacity-70 disabled:cursor-wait text-white px-6 py-3 rounded-lg font-semibold text-xs sm:text-sm transition-all whitespace-nowrap shadow-md shrink-0"
-                                >
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        className="w-4 h-4"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke="currentColor"
-                                        strokeWidth={2.5}
-                                    >
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 104.5 4.5a7.5 7.5 0 0012.15 12.15z"
-                                        />
-                                    </svg>
-                                    {searching ? 'Mencari…' : 'Cari Rute'}
-                                </button>
                             </div>
-                            {isPetunjuk && formError && (
-                                <p role="alert" className="mt-2 text-xs text-red-600">{formError}</p>
-                            )}
+                        </div>
+
+                        {isPetunjuk && formError && (
+                            <p role="alert" className="mt-3 text-sm font-medium text-red-700">{formError}</p>
+                        )}
+
+                        <div className="mt-4 flex sm:justify-end">
+                            <button
+                                type="button"
+                                onClick={isTrayek ? scrollToTarif : goDirections}
+                                disabled={searching}
+                                className="flex min-h-[50px] w-full items-center justify-center gap-2 border-2 border-[#12233F] bg-[#16A34A] px-6 py-3 text-sm font-extrabold text-white shadow-[3px_3px_0_#12233F] transition-colors hover:bg-[#15803D] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-70 sm:w-auto"
+                            >
+                                <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+                                    <circle cx="11" cy="11" r="7" />
+                                    <path d="m20 20-4-4" />
+                                </svg>
+                                {searching ? 'Mencari…' : isTrayek ? 'Lihat Trayek' : 'Cari Rute'}
+                            </button>
                         </div>
                     </div>
                 </div>
             </section>
 
             {/* ── TENTANG PROYEK ── */}
+            <RoadMarker number="01" label="Kenalan" />
             <ProjectInfoSection />
 
             {/* ── INFO TARIF & RUTE ── mengikuti pilihan moda & kolom Tujuan di atas */}
+            <RoadMarker number="02" label="Pilih trayek" />
             <RouteInfoSection mode={activeMode} query={isTrayek ? tujuan : ''} />
         </div>
     )
