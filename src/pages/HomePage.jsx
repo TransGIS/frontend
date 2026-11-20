@@ -158,7 +158,7 @@ function HomePage() {
         <div className="landing-page flex flex-col">
             {/* ── HERO ── */}
             <section
-                className="relative flex min-h-[100svh] flex-col items-center justify-center bg-[#1A3FA0] bg-cover bg-center px-4 pb-20 pt-28 text-center sm:px-6 sm:pt-32 lg:px-8"
+                className="relative flex min-h-[100svh] flex-col items-center justify-center bg-[#1A3FA0] bg-cover bg-fixed bg-center px-4 pb-20 pt-28 text-center sm:px-6 sm:pt-32 lg:px-8"
                 style={{ backgroundImage: `url(${heroBg})` }}
             >
                 {/* Heading */}
