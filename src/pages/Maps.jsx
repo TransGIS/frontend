@@ -1,17 +1,22 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-import { buildGraph, planTrips, MAX_WALK_KM } from '../lib/routing'
-import { loadRoutes } from '../lib/routeData'
-import { readOD } from '../lib/geocode'
+import { buildGraph, planTrips, topPlans, MAX_WALK_KM, dist } from '../lib/routing'
+import { loadRoutes, trackPageView, fetchWalkRoute } from '../lib/routeData'
+import { readOD, searchPlaces } from '../lib/geocode'
+import PlaceInput from '../components/PlaceInput'
 
 /* ────────────────────────────────────────────────────────────
    Konfigurasi
-   Pemuatan & parsing GeoJSON (public/rute/) ada di src/lib/routeData.js
+   Pemuatan data rute dari API backend ada di src/lib/routeData.js
    Geometri jarak & dijkstra ada di src/lib/routing.js
    ──────────────────────────────────────────────────────────── */
 const CENTER = [-6.5971, 106.806]
 const CHIP_COLOR = { biskita: '#F97316', angkot: '#0D9F6E' }
+
+// Kunci geometri jalan kaki = pasangan titik ujung segmen (bukan sig rute),
+// agar tidak memakai geometri lama saat penanda asal/tujuan digeser.
+const walkKey = (w) => `${w.from[0].toFixed(5)},${w.from[1].toFixed(5)}>${w.to[0].toFixed(5)},${w.to[1].toFixed(5)}`
 
 const hhmm = (t) =>
     new Date(t).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false }).replace('.', ':')
@@ -31,7 +36,6 @@ const ICONS = {
     car: <path d="M5 16l1.5-5a2 2 0 012-1.5h7a2 2 0 012 1.5L19 16M4 16h16v3H4zM7 19v1M17 19v1" />,
     walk: <><circle cx="13" cy="4" r="1.5" /><path d="M12 8l-3 3 1 3 2-1M12 8l3 3 2 1M10 14l-2 6M12 13l2 3v4" /></>,
     locate: <><circle cx="12" cy="12" r="3" /><circle cx="12" cy="12" r="7" /><path d="M12 2v3M12 19v3M2 12h3M19 12h3" /></>,
-    close: <path d="M6 6l12 12M18 6L6 18" />,
 }
 function Icon({ name, className = 'w-4 h-4' }) {
     return (
@@ -157,29 +161,10 @@ function RouteDetail({ route, onBack }) {
             <Timeline items={items} />
             {!route.stops.length && (
                 <p className="text-xs text-blue-200 mt-4 leading-relaxed">
-                    Data halte untuk trayek angkot belum ada di file GeoJSON, jadi hanya titik awal dan akhir yang ditampilkan.
+                    Data halte untuk trayek angkot belum ada di database, jadi hanya titik awal dan akhir yang ditampilkan.
                 </p>
             )}
         </>
-    )
-}
-
-function PickField({ label, color, value, placeholder, active, onPick, onClear }) {
-    return (
-        <div>
-            <SectionLabel>{label}</SectionLabel>
-            <div className={`flex items-center bg-white rounded-xl px-3 py-2.5 gap-2.5 ring-2 transition-all ${active ? 'ring-[#F97316]' : 'ring-transparent'}`}>
-                <span style={{ color }}><Icon name="pin" className="w-4 h-4" /></span>
-                <button type="button" onClick={onPick} className={`flex-1 text-left text-sm truncate ${value ? 'text-gray-800' : 'text-gray-400'}`}>
-                    {value || placeholder}
-                </button>
-                {value && (
-                    <button type="button" onClick={onClear} aria-label={`Hapus ${label}`} className="text-gray-400 hover:text-gray-700">
-                        <Icon name="close" className="w-4 h-4" />
-                    </button>
-                )}
-            </div>
-        </div>
     )
 }
 
@@ -203,11 +188,6 @@ function PlanChips({ plan }) {
     out.push(walk(plan.endWalk.min, 'wend'))
     return <div className="flex flex-wrap items-center gap-1.5">{out}</div>
 }
-
-const TagPill = ({ tag }) =>
-    tag ? (
-        <span className={`text-[10px] font-bold rounded px-2 py-0.5 ${tag === 'Tercepat' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>{tag}</span>
-    ) : null
 
 function PlanSummary({ plan }) {
     return (
@@ -385,8 +365,14 @@ function Maps() {
 
     const [asal, setAsal] = useState(init?.asal ?? null)
     const [tujuan, setTujuan] = useState(init?.tujuan ?? null)
+    // Teks & place terpilih untuk input ketikan (sinkron dengan koordinat di atas)
+    const [asalText, setAsalText] = useState(init ? `Titik di peta (${init.asal[0].toFixed(4)}, ${init.asal[1].toFixed(4)})` : '')
+    const [asalPlace, setAsalPlace] = useState(init ? { id: 'asal-init', name: 'Titik di peta', lat: init.asal[0], lng: init.asal[1] } : null)
+    const [tujuanText, setTujuanText] = useState(init ? `Titik di peta (${init.tujuan[0].toFixed(4)}, ${init.tujuan[1].toFixed(4)})` : '')
+    const [tujuanPlace, setTujuanPlace] = useState(init ? { id: 'tujuan-init', name: 'Titik di peta', lat: init.tujuan[0], lng: init.tujuan[1] } : null)
     const [pick, setPick] = useState(init ? null : 'asal')
     const [planIdx, setPlanIdx] = useState(null)
+    const [walkGeo, setWalkGeo] = useState({}) // geometri jalan kaki asli per segmen (kunci: walkKey)
     const [autoPlan, setAutoPlan] = useState(!!init) // buka rute tercepat otomatis, sekali saja
     const [geoMsg, setGeoMsg] = useState('')
 
@@ -397,9 +383,43 @@ function Maps() {
     const live = useRef({})
     live.current = { tab, pick, tujuan }
 
+    /* ── Sinkronisasi asal/tujuan: ketikan, klik peta, geser penanda, GPS ── */
+    const setPoint = (which, ll, label = 'Titik di peta') => {
+        const text = `${label} (${ll[0].toFixed(4)}, ${ll[1].toFixed(4)})`
+        const place = { id: `${which}-peta`, name: label, lat: ll[0], lng: ll[1] }
+        if (which === 'asal') { setAsal(ll); setAsalText(text); setAsalPlace(place) }
+        else { setTujuan(ll); setTujuanText(text); setTujuanPlace(place) }
+    }
+    const applyPlace = (which, p) => {
+        const ll = [p.lat, p.lng]
+        if (which === 'asal') { setAsal(ll); setAsalText(p.name); setAsalPlace(p); setPick(tujuan ? null : 'tujuan') }
+        else { setTujuan(ll); setTujuanText(p.name); setTujuanPlace(p); setPick(null) }
+        setPlanIdx(null)
+        map.current?.flyTo(ll, 15)
+    }
+    const clearPoint = (which) => {
+        if (which === 'asal') { setAsal(null); setAsalText(''); setAsalPlace(null); setPick('asal') }
+        else { setTujuan(null); setTujuanText(''); setTujuanPlace(null); setPick('tujuan') }
+        setPlanIdx(null)
+    }
+    // Enter tanpa memilih saran: cari hasil pertama lalu terapkan
+    const resolveText = async (which) => {
+        const text = (which === 'asal' ? asalText : tujuanText).trim()
+        if (!text) return
+        setGeoMsg('')
+        try {
+            const p = (await searchPlaces(text, undefined, 1))[0]
+            if (!p) return setGeoMsg(`Lokasi “${text}” tidak ditemukan di sekitar Bogor.`)
+            applyPlace(which, p)
+        } catch {
+            setGeoMsg('Pencarian lokasi gagal. Periksa koneksi lalu coba lagi.')
+        }
+    }
+
     /* ── Muat GeoJSON lewat routeData.js (di-cache, dipakai juga oleh HomePage) ── */
     useEffect(() => {
         let off = false
+        trackPageView()
         loadRoutes()
             .then((d) => { if (!off) { setData(d); setStatus('ready') } })
             .catch((e) => { if (!off) { setError(e.message); setStatus('error') } })
@@ -428,8 +448,22 @@ function Maps() {
             )
         }
     }, [graph])
-    const plans = useMemo(() => (asal && tujuan ? planTrips(graph, asal, tujuan) : []), [graph, asal, tujuan])
+    const plans = useMemo(() => (asal && tujuan ? topPlans(planTrips(graph, asal, tujuan)) : []), [graph, asal, tujuan])
     const plan = tab === 'petunjuk' && planIdx != null ? plans[planIdx] || null : null
+
+    /* ── Jalur jalan kaki mengikuti jalan asli (Valhalla/OSRM pejalan kaki via backend) ── */
+    useEffect(() => {
+        if (!plan) return
+        let off = false
+        const jobs = plan.legs.map((l) => l.walk).concat([plan.endWalk])
+        jobs.forEach((w) => {
+            if (dist(w.from, w.to) < 0.05) return // sangat dekat: garis lurus sudah cukup
+            fetchWalkRoute(w.from, w.to).then((pts) => {
+                if (!off && pts) setWalkGeo((prev) => ({ ...prev, [walkKey(w)]: pts }))
+            })
+        })
+        return () => { off = true }
+    }, [plan])
 
     // Datang dari landing page: setelah data rute siap, langsung tampilkan rute tercepat
     useEffect(() => {
@@ -460,10 +494,10 @@ function Maps() {
             if (t !== 'petunjuk' || !p) return
             const ll = [e.latlng.lat, e.latlng.lng]
             if (p === 'asal') {
-                setAsal(ll)
+                setPoint('asal', ll)
                 setPick(tj ? null : 'tujuan')
             } else {
-                setTujuan(ll)
+                setPoint('tujuan', ll)
                 setPick(null)
             }
             setPlanIdx(null)
@@ -534,17 +568,17 @@ function Maps() {
         const og = groups.current.od
         if (!og) return
         og.clearLayers()
-        const add = (pos, color, text, setter) =>
+        const add = (pos, color, text, which) =>
             L.marker(pos, { icon: pinIcon(color, text), draggable: true })
                 .on('dragend', (e) => {
                     const { lat, lng } = e.target.getLatLng()
-                    setter([lat, lng])
+                    setPoint(which, [lat, lng])
                     setPlanIdx(null)
                 })
                 .addTo(og)
         if (tab !== 'petunjuk') return
-        if (asal) add(asal, '#16A34A', 'A', setAsal)
-        if (tujuan) add(tujuan, '#F97316', 'B', setTujuan)
+        if (asal) add(asal, '#16A34A', 'A', 'asal')
+        if (tujuan) add(tujuan, '#F97316', 'B', 'tujuan')
     }, [asal, tujuan, tab])
 
     /* ── Gambar rute perjalanan terpilih (bisa multi-leg / transit) ── */
@@ -557,7 +591,9 @@ function Maps() {
         const walk = { color: '#1B3A8C', weight: 4, dashArray: '2 9', lineCap: 'round' }
         const all = [asal, tujuan]
         plan.legs.forEach((l) => {
-            L.polyline([l.walk.from, l.walk.to], walk).addTo(pg)
+            const wpts = walkGeo[walkKey(l.walk)] || [l.walk.from, l.walk.to]
+            all.push(...wpts)
+            L.polyline(wpts, walk).addTo(pg)
             const ride = l.ridePts
             all.push(...ride)
             L.polyline(ride, { color: '#fff', weight: 11, opacity: 0.9 }).addTo(pg)
@@ -566,9 +602,11 @@ function Maps() {
                     L.circleMarker(p, { radius: 6, color: l.route.color, weight: 3, fillColor: '#fff', fillOpacity: 1 }).addTo(pg),
                 )
         })
-        L.polyline([plan.endWalk.from, plan.endWalk.to], walk).addTo(pg)
+        const endPts = walkGeo[walkKey(plan.endWalk)] || [plan.endWalk.from, plan.endWalk.to]
+        all.push(...endPts)
+        L.polyline(endPts, walk).addTo(pg)
         m.fitBounds(L.latLngBounds(all), { padding: [60, 60] })
-    }, [plan, asal, tujuan])
+    }, [plan, asal, tujuan, walkGeo])
 
     /* ── Aksi ── */
     const switchTab = (t) => {
@@ -590,7 +628,7 @@ function Maps() {
         navigator.geolocation.getCurrentPosition(
             (pos) => {
                 const ll = [pos.coords.latitude, pos.coords.longitude]
-                setAsal(ll)
+                setPoint('asal', ll, 'Lokasi Anda')
                 setPick(tujuan ? null : 'tujuan')
                 setPlanIdx(null)
                 map.current?.flyTo(ll, 15)
@@ -599,7 +637,6 @@ function Maps() {
             { enableHighAccuracy: true, timeout: 10000 },
         )
     }
-    const fmtPoint = (p) => (p ? `Titik di peta (${p[0].toFixed(4)}, ${p[1].toFixed(4)})` : '')
 
     const legend = tab === 'petunjuk' ? [...data.biskita.slice(0, 2), ...data.angkot.slice(0, 4)] : routes.slice(0, 6)
 
@@ -648,7 +685,7 @@ function Maps() {
                     {status === 'loading' && <p className="text-sm text-blue-100">Memuat data rute…</p>}
                     {status === 'error' && (
                         <div className="bg-red-50 text-red-800 text-sm rounded-xl p-3.5 leading-relaxed">
-                            Data rute gagal dimuat: {error}. Pastikan file GeoJSON ada di <code>public/rute/</code>.
+                            Data rute gagal dimuat: {error}. Pastikan backend API berjalan (VITE_API_URL) dan data rute sudah di-seed.
                         </div>
                     )}
 
@@ -685,16 +722,33 @@ function Maps() {
                         ) : (
                             <>
                                 <div className="flex flex-col gap-3">
-                                    <PickField
-                                        label="Asal" color="#16A34A" value={fmtPoint(asal)} active={pick === 'asal'}
-                                        placeholder="Klik peta untuk memilih lokasi asal"
-                                        onPick={() => setPick('asal')} onClear={() => { setAsal(null); setPick('asal'); setPlanIdx(null) }}
-                                    />
-                                    <PickField
-                                        label="Tujuan" color="#F97316" value={fmtPoint(tujuan)} active={pick === 'tujuan'}
-                                        placeholder="Klik peta untuk memilih tujuan"
-                                        onPick={() => setPick('tujuan')} onClear={() => { setTujuan(null); setPick('tujuan'); setPlanIdx(null) }}
-                                    />
+                                    <div>
+                                        <SectionLabel>Asal</SectionLabel>
+                                        <PlaceInput
+                                            value={asalText}
+                                            selected={asalPlace}
+                                            onChange={(t) => { setAsalText(t); setAsalPlace(null) }}
+                                            onSelect={(p) => applyPlace('asal', p)}
+                                            onFocus={() => setPick('asal')}
+                                            onSubmit={() => resolveText('asal')}
+                                            onClear={() => clearPoint('asal')}
+                                            pinClass="text-[#16A34A]"
+                                            placeholder="Ketik lokasi asal... (cth: Stasiun Bogor)"
+                                        />
+                                    </div>
+                                    <div>
+                                        <SectionLabel>Tujuan</SectionLabel>
+                                        <PlaceInput
+                                            value={tujuanText}
+                                            selected={tujuanPlace}
+                                            onChange={(t) => { setTujuanText(t); setTujuanPlace(null) }}
+                                            onSelect={(p) => applyPlace('tujuan', p)}
+                                            onFocus={() => setPick('tujuan')}
+                                            onSubmit={() => resolveText('tujuan')}
+                                            onClear={() => clearPoint('tujuan')}
+                                            placeholder="Ketik lokasi tujuan... (cth: Kebun Raya)"
+                                        />
+                                    </div>
                                     <button
                                         type="button"
                                         onClick={useMyLocation}
@@ -709,31 +763,35 @@ function Maps() {
                                     <p className="px-4 py-3 text-xs font-bold uppercase tracking-wider text-white">Rute rekomendasi</p>
                                     {!asal || !tujuan ? (
                                         <p className="px-4 pb-2 text-sm text-blue-100 leading-relaxed">
-                                            {pick === 'tujuan' ? 'Klik peta untuk menentukan tujuan.' : 'Pilih asal dan tujuan di peta, rute terbaik akan muncul di sini.'}
+                                            {pick === 'tujuan' ? 'Ketik atau klik peta untuk menentukan tujuan.' : 'Ketik atau klik peta untuk memilih asal dan tujuan, rute terbaik akan muncul di sini.'}
                                         </p>
                                     ) : plans.length === 0 ? (
                                         <p className="px-4 pb-2 text-sm text-blue-100 leading-relaxed">
                                             Tidak ditemukan rute Bis Kita atau angkot (termasuk transit) dalam jarak jalan {MAX_WALK_KM} km. Geser penanda asal atau tujuan.
                                         </p>
                                     ) : (
-                                        plans.map((p, i) => (
+                                        <>
+                                            {plans.map((p, i) => (
                                             <button
                                                 key={p.sig}
                                                 type="button"
                                                 onClick={() => setPlanIdx(i)}
                                                 className="w-full text-left px-4 py-4 border-t border-white/15 hover:bg-white/5 transition-colors"
                                             >
-                                                <div className="flex items-start justify-between gap-2">
-                                                    <PlanSummary plan={p} />
-                                                    <TagPill tag={p.tag} />
-                                                </div>
+                                                {p.tag && (
+                                                    <span className="inline-flex items-center gap-1 bg-[#F97316] text-white text-[10px] font-bold uppercase tracking-wide rounded-full px-2.5 py-0.5 mb-1.5">
+                                                        <Icon name="clock" className="w-3 h-3" />{p.tag}
+                                                    </span>
+                                                )}
+                                                <PlanSummary plan={p} />
                                                 <div className="my-2.5"><PlanChips plan={p} /></div>
                                                 <p className="text-xs text-blue-100">
-                                                    Naik pukul <b className="text-white">{hhmm(p.depart)}</b> dari jalur {p.legs[0].route.ref} ({p.legs[0].route.from}{p.legs[0].route.to && ' → ' + p.legs[0].route.to})
+                                                    Tarif ~{fmtFare(p.fare)} • Naik pukul <b className="text-white">{hhmm(p.depart)}</b> dari jalur {p.legs[0].route.ref} ({p.legs[0].route.from}{p.legs[0].route.to && ' → ' + p.legs[0].route.to})
                                                     {p.transfers > 0 && <> • lanjut {p.legs.slice(1).map((l) => l.route.ref).join(', ')}</>}
                                                 </p>
                                             </button>
-                                        ))
+                                            ))}
+                                        </>
                                     )}
                                 </div>
                             </>

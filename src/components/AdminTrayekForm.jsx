@@ -5,8 +5,8 @@ import { Icon } from './AdminUi'
 import { RouteMap } from './AdminRouteMap'
 
 const TITLE = { biskita: 'BisKita Trans Pakuan', angkot: 'Trayek Angkot Bogor' }
-const JARINGAN = ['BisKita Trans Pakuan', 'Angkutan Kota Bogor', 'Angkutan Kabupaten Bogor']
-const KENDARAAN = ['bus', 'angkot', 'minibus']
+const TIPE_TARIF = { flat: 'Flat (per penumpang)', jarak: 'Berdasarkan jarak' }
+const STATUS = { aktif: 'Aktif Normal', nonaktif: 'Nonaktif' }
 const HEX = /^#[0-9a-f]{6}$/i
 const inp = 'w-full h-10 rounded-lg border border-gray-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-[#1D4ED8] focus:bg-white'
 
@@ -42,11 +42,6 @@ const Card = ({ title, children }) => (
 const F = ({ label, children }) => (
     <label className="block"><span className="block text-xs font-semibold text-gray-700 mb-1.5">{label}</span>{children}</label>
 )
-const Select = ({ value, onChange, options }) => (
-    <select value={value} onChange={onChange} className={inp}>
-        {[...new Set([value, ...options].filter(Boolean))].map((o) => <option key={o}>{o}</option>)}
-    </select>
-)
 const Color = ({ value, onChange, label }) => (
     <div className="flex gap-2">
         <input value={value} onChange={onChange} maxLength={7} className={inp} />
@@ -61,7 +56,7 @@ export default function AdminTrayekForm() {
     const edit = Boolean(id)
     const nav = useNavigate()
     const [f, setF] = useState(() => ({
-        nama: '', kode: '', kodeLama: '', from: '', to: '', via: '', ...FORM_DEFAULTS[kind],
+        nama: '', kode: '', from: '', to: '', via: '', ...FORM_DEFAULTS[kind],
         color: '#2563EB', markerColor: '#F97316', parts: [], stops: [],
     }))
     const [loading, setLoading] = useState(edit)
@@ -119,7 +114,7 @@ export default function AdminTrayekForm() {
     return (
         <div className="max-w-[1280px]">
             <nav aria-label="Breadcrumb" className="text-xs text-gray-500 flex flex-wrap gap-2">
-                <Link to="/admin" className="hover:underline">Beranda</Link>›<span>Manajemen Trayek</span>›
+                <Link to="/admin/dasbor" className="hover:underline">Beranda</Link>›<span>Manajemen Trayek</span>›
                 <Link to={`/admin/trayek/${kind}`} className="hover:underline">{TITLE[kind]}</Link>›
                 <span className="text-blue-600">{edit ? 'Ubah Rute' : 'Input Rute Baru'}</span>
             </nav>
@@ -130,10 +125,7 @@ export default function AdminTrayekForm() {
                 <div className="space-y-5">
                     <Card title="Informasi utama rute">
                         <F label="Nama Rute"><input className={inp} value={f.nama} onChange={set('nama')} placeholder="Terminal Bubulak–Cidangiang" /></F>
-                        <div className="grid grid-cols-2 gap-3">
-                            <F label="Kode Trayek *"><input className={inp} value={f.kode} onChange={set('kode')} placeholder="K1" /></F>
-                            <F label="Kode Trayek Lama"><input className={inp} value={f.kodeLama} onChange={set('kodeLama')} placeholder="03" /></F>
-                        </div>
+                        <F label="Kode Trayek *"><input className={inp} value={f.kode} onChange={set('kode')} placeholder="K1" /></F>
                     </Card>
 
                     <Card title="Detail perjalanan">
@@ -143,9 +135,23 @@ export default function AdminTrayekForm() {
                     </Card>
 
                     <Card title="Operasional">
-                        <F label="Jaringan Bus"><Select value={f.jaringan} onChange={set('jaringan')} options={JARINGAN} /></F>
-                        <F label="Operator"><input className={inp} value={f.operator} onChange={set('operator')} /></F>
-                        <F label="Jenis Kendaraan"><Select value={f.kendaraan} onChange={set('kendaraan')} options={KENDARAAN} /></F>
+                        <div className="grid grid-cols-2 gap-3">
+                            <F label="Tarif"><input className={inp} value={f.tarif} onChange={set('tarif')} /></F>
+                            <F label="Tipe Tarif">
+                                <select value={f.tipeTarif} onChange={set('tipeTarif')} className={inp}>
+                                    {Object.entries(TIPE_TARIF).map(([v, label]) => <option key={v} value={v}>{label}</option>)}
+                                </select>
+                            </F>
+                            <F label="Interval (menit)"><input type="number" min="0" max="600" className={inp} value={f.intervalMenit} onChange={set('intervalMenit')} /></F>
+                            <F label="Status">
+                                <select value={f.status} onChange={set('status')} className={inp}>
+                                    {Object.entries(STATUS).map(([v, label]) => <option key={v} value={v}>{label}</option>)}
+                                </select>
+                            </F>
+                            <F label="Jam Buka"><input type="time" className={inp} value={f.jamBuka} onChange={set('jamBuka')} /></F>
+                            <F label="Jam Tutup"><input type="time" className={inp} value={f.jamTutup} onChange={set('jamTutup')} /></F>
+                        </div>
+                        <F label="Integrasi (pisahkan dengan koma)"><input className={inp} value={f.integrasi} onChange={set('integrasi')} placeholder="KRL Jabodetabek, Damri Bandara" /></F>
                     </Card>
 
                     <Card title="Pengaturan peta">

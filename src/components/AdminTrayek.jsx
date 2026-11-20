@@ -36,7 +36,7 @@ export default function AdminTrayek() {
 
     return (
         <div className="max-w-[1100px]">
-            <nav aria-label="Breadcrumb" className="text-xs text-gray-500 flex gap-2"><Link to="/admin" className="hover:underline">Beranda</Link>›<span>Manajemen Trayek</span>›<span className="text-blue-600">{title}</span></nav>
+            <nav aria-label="Breadcrumb" className="text-xs text-gray-500 flex gap-2"><Link to="/admin/dasbor" className="hover:underline">Beranda</Link>›<span>Manajemen Trayek</span>›<span className="text-blue-600">{title}</span></nav>
             <div className="mt-3 flex flex-wrap items-start justify-between gap-3">
                 <div><h1 className="text-2xl font-bold tracking-tight">Manajemen {title}</h1>
                     <p className="text-sm text-gray-600 mt-1 max-w-2xl">Pengelolaan data {KIND[k][1]}, rute operasional, titik halte, jadwal headway, dan armada Kota Bogor.</p></div>

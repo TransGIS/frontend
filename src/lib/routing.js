@@ -17,7 +17,7 @@ import { ONEWAY_ZONES } from '../data/oneway-zones'
 
 export const SPEED = { biskita: 18, angkot: 15 } // km/jam
 export const WAIT_MIN = 5
-export const MAX_WALK_KM = 0.8
+export const MAX_WALK_KM = 1.2 // jangkauan jalan kaki awal/akhir; 0,8 terlalu ketat (titik turun wajar terbuang)
 export const DETOUR = 1.25 // faktor jalan kaki tidak lurus
 const WALK_KMH = 4.8
 const TRANSFER_KM = 0.35 // jarak maks pindah jalur
@@ -30,11 +30,16 @@ const LOOP_TRIM_DEG = 10 // belokan lebih kecil dari ini di ujung loop dianggap 
 const STOP_SNAP_KM = 0.7 // halte yang lebih jauh dari ini dari jalurnya diabaikan
 const FARE_NUM = { biskita: [4000, 4000], angkot: [5000, 7000] }
 
-// Tiap profil = satu "gaya" pencarian → hasil beragam
+// Tiap profil = satu "gaya" pencarian → hasil beragam.
+// xferPen = penalti setara-menit per transit (repot pindah + tarif tambahan).
+// Tanpa penalti, angkot 0,2 km + tunggu terlihat "lebih cepat" daripada
+// jalan kaki ±1 km dari titik turun yang wajar.
 const PROFILES = [
-    { walkMul: 1, xferPen: 0 }, // tercepat
-    { walkMul: 1, xferPen: 12 }, // hindari transit
-    { walkMul: 3, xferPen: 3 }, // hindari jalan kaki
+    { walkMul: 1, xferPen: 0 }, // murni tercepat: abaikan biaya & repot transit
+    { walkMul: 1, xferPen: 6 }, // tercepat (wajar terhadap transit)
+    { walkMul: 1, xferPen: 18 }, // hindari transit
+    { walkMul: 3, xferPen: 9 }, // hindari jalan kaki
+    { walkMul: 0.6, xferPen: 30 }, // terhemat: sedikit naik, banyak jalan
 ]
 
 const RAD = Math.PI / 180
@@ -479,7 +484,7 @@ function toPlan(g, path, A, B, t0) {
     }
 }
 
-/* ── API utama: kembalikan hingga 4 opsi rute (boleh transit) ── */
+/* ── API utama: pool kandidat rute (boleh transit), terurut dari yang tercepat ── */
 export function planTrips(g, A, B) {
     if (!g.nodes.length) return []
     const startList = nearestPerPart(g, A)
@@ -505,13 +510,13 @@ export function planTrips(g, A, B) {
 
     const all = [...found.values()].sort((x, y) => x.total - y.total)
     if (!all.length) return []
-    const top = all.filter((p) => p.total <= all[0].total * 1.8).slice(0, 4)
+    // Pool kandidat beragam; pemotongan akhir dilakukan topPlans.
+    return all.filter((p) => p.total <= all[0].total * 2.2).slice(0, 6)
+}
 
-    top[0].tag = 'Tercepat'
-    const rest = top.slice(1)
-    const fewT = rest.filter((p) => p.transfers < top[0].transfers).sort((x, y) => x.transfers - y.transfers || x.total - y.total)[0]
-    if (fewT) fewT.tag = 'Sedikit Transit'
-    const fewW = rest.filter((p) => !p.tag && p.walkKm < top[0].walkKm).sort((x, y) => x.walkKm - y.walkKm)[0]
-    if (fewW) fewW.tag = 'Sedikit Jalan'
+/* Empat opsi tercepat untuk ditampilkan; opsi pertama diberi label "Tercepat". */
+export function topPlans(pool) {
+    const top = pool.slice().sort((a, b) => a.total - b.total).slice(0, 4)
+    top.forEach((p, i) => { p.tag = i === 0 ? 'Tercepat' : null })
     return top
 }

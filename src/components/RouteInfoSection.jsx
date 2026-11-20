@@ -273,7 +273,7 @@ function RouteInfoSection({ mode = 'biskita', query = '' }) {
                 {status === 'loading' && <p className="text-sm text-gray-500">Memuat data rute…</p>}
                 {status === 'error' && (
                     <div className="bg-red-50 text-red-800 text-sm rounded-xl p-3.5 leading-relaxed">
-                        Data rute gagal dimuat: {error}. Pastikan file GeoJSON ada di <code>public/rute/</code>.
+                        Data rute gagal dimuat: {error}. Pastikan backend API berjalan (VITE_API_URL) dan data rute sudah di-seed.
                     </div>
                 )}
 

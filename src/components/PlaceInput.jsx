@@ -7,8 +7,10 @@ import { searchPlaces } from '../lib/geocode'
  * - selected         : place terpilih ({ name, lat, lng, ... }) atau null
  * - onSelect(place)  : dipanggil saat saran dipilih
  * - onSubmit         : dipanggil saat Enter tanpa saran yang disorot
+ * - onFocus          : opsional, dipanggil saat input difokuskan
+ * - onClear          : opsional, bila ada menampilkan tombol × untuk menghapus
  */
-function PlaceInput({ value, selected, onChange, onSelect, onSubmit, placeholder, pinClass = 'text-[#F97316]', className = '' }) {
+function PlaceInput({ value, selected, onChange, onSelect, onSubmit, onFocus, onClear, placeholder, pinClass = 'text-[#F97316]', className = '' }) {
     const [open, setOpen] = useState(false)
     const [items, setItems] = useState([])
     const [state, setState] = useState('idle') // idle | loading | done | error
@@ -61,7 +63,7 @@ function PlaceInput({ value, selected, onChange, onSelect, onSubmit, placeholder
                     type="text"
                     value={value}
                     onChange={(e) => { onChange(e.target.value); setOpen(true) }}
-                    onFocus={() => setOpen(true)}
+                    onFocus={() => { setOpen(true); onFocus?.() }}
                     onBlur={() => setOpen(false)}
                     onKeyDown={onKeyDown}
                     placeholder={placeholder}
@@ -72,6 +74,9 @@ function PlaceInput({ value, selected, onChange, onSelect, onSubmit, placeholder
                     className="flex-1 bg-transparent text-gray-700 text-xs sm:text-sm outline-none placeholder-gray-400 min-w-0"
                 />
                 {selected && <span className="text-green-600 text-xs font-bold ml-2 shrink-0" aria-label="Lokasi dipilih">✓</span>}
+                {onClear && (value || selected) && (
+                    <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={onClear} aria-label="Hapus lokasi" className="text-gray-400 hover:text-gray-700 ml-2 shrink-0 text-sm font-bold">×</button>
+                )}
             </div>
 
             {showPanel && (

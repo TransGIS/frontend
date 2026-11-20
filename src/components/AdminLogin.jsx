@@ -10,13 +10,13 @@ export default function AdminLogin() {
     const [show, setShow] = useState(false)
     const [err, setErr] = useState('')
     const [busy, setBusy] = useState(false)
-    if (session.get()) return <Navigate to="/admin" replace />
+    if (session.get()) return <Navigate to="/admin/dasbor" replace />
 
     const submit = async (e) => {
         e.preventDefault()
         if (!u.trim() || !p) return setErr('Isi username dan kata sandi.')
         setBusy(true); setErr('')
-        try { session.set(await adminApi.login(u.trim(), p)); nav('/admin', { replace: true }) }
+        try { session.set(await adminApi.login(u.trim(), p)); nav('/admin/dasbor', { replace: true }) }
         catch (x) { setErr(x.message) } finally { setBusy(false) }
     }
     return (

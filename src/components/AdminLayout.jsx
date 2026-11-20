@@ -4,7 +4,7 @@ import { session } from '../lib/adminApi'
 import { Icon, Logo } from './AdminUi'
 
 const GROUPS = [
-    { label: 'Utama', items: [{ to: '/admin', end: true, icon: 'grid', text: 'Dashboard' }] },
+    { label: 'Utama', items: [{ to: '/admin/dasbor', icon: 'grid', text: 'Dashboard' }] },
     {
         label: 'Manajemen Trayek', items: [
             { to: '/admin/trayek/biskita', icon: 'bus', text: 'BisKita Trans Pakuan' },
@@ -13,8 +13,8 @@ const GROUPS = [
     },
     {
         label: 'Info Tarif & Rute', items: [
-            { href: '/#tarif', icon: 'bus', text: 'BisKita Trans Pakuan' },
-            { href: '/#tarif', icon: 'van', text: 'Trayek Angkot Bogor' },
+            { to: '/admin/info/biskita', icon: 'bus', text: 'BisKita Trans Pakuan' },
+            { to: '/admin/info/angkot', icon: 'van', text: 'Trayek Angkot Bogor' },
         ]
     },
 ]
@@ -23,6 +23,7 @@ export default function AdminLayout() {
     const s = session.get()
     const nav = useNavigate()
     const [open, setOpen] = useState(false)
+    const [confirmOut, setConfirmOut] = useState(false)
     if (!s) return <Navigate to="/admin/login" replace />
     const initials = (s.user?.name || 'AD').split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase()
     const cls = (active) => `flex items-center gap-3 px-3 h-10 rounded-lg text-sm transition-colors ${active ? 'bg-[#EA580C] text-white font-semibold' : 'text-blue-50 hover:bg-white/10'}`
@@ -39,10 +40,10 @@ export default function AdminLayout() {
                 <div className="flex items-center gap-4 ml-auto md:ml-4">
                     <button type="button" aria-label="Notifikasi" className="relative text-slate-500"><Icon name="bell" className="w-5 h-5" /><span className="absolute -top-0.5 right-0 w-2 h-2 rounded-full bg-orange-500" /></button>
                     <span className="hidden sm:block w-px h-8 bg-gray-200" />
-                    <button type="button" onClick={() => { session.clear(); nav('/admin/login') }} title="Klik untuk keluar" className="flex items-center gap-3 text-left">
+                    <button type="button" onClick={() => setConfirmOut(true)} title="Klik untuk keluar" className="flex items-center gap-3 text-left">
                         <span className="w-9 h-9 rounded-full bg-slate-800 text-white text-xs font-bold flex items-center justify-center">{initials}</span>
                         <span className="hidden sm:block leading-tight"><b className="block text-xs">{s.user?.name}</b><span className="text-[11px] text-gray-500">{s.user?.role}</span></span>
-                        <Icon name="chevron" className="hidden sm:block w-3.5 h-3.5 text-gray-400" />
+                        <Icon name="logout" className="w-4 h-4 text-gray-400" />
                     </button>
                 </div>
             </header>
@@ -52,16 +53,29 @@ export default function AdminLayout() {
                 {GROUPS.map((g) => (
                     <nav key={g.label} className="mb-6" aria-label={g.label}>
                         <p className="px-3 mb-2 text-[11px] font-bold uppercase tracking-wide text-white">{g.label}</p>
-                        {g.items.map((i) => i.to ? (
+                        {g.items.map((i) => (
                             <NavLink key={i.text + i.to} to={i.to} end={i.end} onClick={() => setOpen(false)} className={({ isActive }) => cls(isActive)}><Icon name={i.icon} className="w-[18px] h-[18px]" />{i.text}</NavLink>
-                        ) : (
-                            <a key={i.text + i.href} href={i.href} className={cls(false)}><Icon name={i.icon} className="w-[18px] h-[18px]" />{i.text}</a>
                         ))}
                     </nav>
                 ))}
             </aside>
 
             <main className="pt-[72px] lg:pl-72"><div className="p-4 sm:p-8"><Outlet /></div></main>
+
+            {confirmOut && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <button type="button" aria-label="Tutup konfirmasi" onClick={() => setConfirmOut(false)} className="absolute inset-0 bg-black/40" />
+                    <div role="dialog" aria-modal="true" aria-labelledby="logout-title" className="relative bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
+                        <span className="w-11 h-11 rounded-xl bg-red-50 text-red-600 flex items-center justify-center"><Icon name="logout" className="w-5 h-5" /></span>
+                        <h2 id="logout-title" className="mt-4 text-base font-bold text-gray-900">Keluar dari Admin?</h2>
+                        <p className="mt-1.5 text-sm text-gray-600">Sesi Anda akan diakhiri. Untuk mengakses halaman admin lagi, Anda harus login kembali.</p>
+                        <div className="mt-5 flex gap-3">
+                            <button type="button" onClick={() => setConfirmOut(false)} className="flex-1 h-10 rounded-xl border border-gray-200 text-sm font-bold text-gray-700 hover:bg-gray-50 transition-colors">Batal</button>
+                            <button type="button" onClick={() => { session.clear(); nav('/admin/login', { replace: true }) }} className="flex-1 h-10 rounded-xl bg-red-600 text-white text-sm font-bold hover:bg-red-700 transition-colors">Keluar</button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

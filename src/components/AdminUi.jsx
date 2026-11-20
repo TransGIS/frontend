@@ -18,7 +18,7 @@ const P = {
     map: <path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2zM9 4v14M15 6v14" />,
     filter: <path d="M4 5h16l-6 8v6l-4-2v-4z" />,
     refresh: <path d="M20 11a8 8 0 00-14-4M4 4v4h4M4 13a8 8 0 0014 4M20 20v-4h-4" />,
-    chevron: <path d="M6 9l6 6 6-6" />,
+    logout: <><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" /><path d="M16 17l5-5-5-5" /><path d="M21 12H9" /></>,
     menu: <path d="M4 6h16M4 12h16M4 18h16" />,
     trend: <path d="M3 17l6-6 4 4 8-8M15 7h6v6" />,
     route: <><circle cx="6" cy="5" r="2" /><circle cx="18" cy="19" r="2" /><path d="M8 5h6a3 3 0 010 6h-4a3 3 0 000 6h6" /></>,
@@ -31,7 +31,7 @@ export function Icon({ name, className = '' }) {
 
 export function Logo({ className = '' }) {
     return (
-        <Link to="/admin" className={`inline-flex items-center gap-1.5 ${className}`}>
+        <Link to="/admin/dasbor" className={`inline-flex items-center gap-1.5 ${className}`}>
             <svg viewBox="0 0 24 30" className="w-7 h-9" aria-hidden="true"><path d="M12 29S2 19 2 11a10 10 0 1120 0c0 8-10 18-10 18z" fill="#F97316" /><circle cx="12" cy="11" r="4" fill="#fff" /></svg>
             <span className="text-3xl font-bold tracking-tight"><span className="text-[#0A47A9]">Trans</span><span className="text-[#047857]">GIS</span></span>
         </Link>
