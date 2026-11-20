@@ -5,7 +5,8 @@ import { PixelTransitScene, RoadMarker } from '../components/PixelRoad'
 import { mapsUrl, searchPlaces } from '../lib/geocode'
 import { trackPageView } from '../lib/routeData'
 import { scrollToTarget } from '../lib/scrollTo'
-import heroBg from '../../../hero-section.jpeg'
+
+const heroBg = '/hero-section.jpeg'
 
 // --- Color tokens (TransGIS brand) ---
 // Primary blue: #1B3A8C  Hero bg: #1A3FA0  Orange accent: #F97316
