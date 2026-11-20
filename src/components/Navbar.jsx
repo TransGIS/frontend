@@ -25,10 +25,10 @@ function Navbar() {
     }, [isHome])
 
     const navLinks = [
-        { href: '/', label: 'Home', active: isHome && hash !== '#tarif' && hash !== '#tentang' },
-        { href: '/maps', label: 'Peta Perjalanan', active: path === '/maps' },
+        { href: '/', label: 'Beranda', active: isHome && hash !== '#tarif' && hash !== '#tentang' },
         { href: '/#tentang', label: 'Tentang', active: isHome && hash === '#tentang' },
         { href: '/#tarif', label: 'Info Tarif & Rute', active: isHome && hash === '#tarif' },
+        { href: '/maps', label: 'Peta Perjalanan', active: path === '/maps' },
     ]
 
     return (
@@ -53,19 +53,24 @@ function Navbar() {
                     </span>
                 </a>
 
-                <nav className="hidden md:flex items-center gap-7" aria-label="Navigasi utama">
+                <nav className="hidden md:flex items-center gap-1.5" aria-label="Navigasi utama">
                     {navLinks.map(({ href, label, active }) => (
                         <a
                             key={href}
                             href={href}
-                            className={`text-sm font-semibold transition-colors ${active
-                                ? 'border-b-2 border-[#F97316] pb-0.5 text-[#F97316]'
+                            aria-current={active ? 'page' : undefined}
+                            className={`group relative px-3 py-2 text-sm font-semibold transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] ${active
+                                ? 'text-[#F97316] hover:bg-[#F97316]/10'
                                 : solid
-                                    ? 'text-[#12233F] hover:text-[#1B3A8C]'
-                                    : 'text-white [text-shadow:0_1px_8px_rgba(18,35,63,0.9)] hover:text-orange-200'
+                                    ? 'text-[#12233F] hover:bg-[#12233F]/5 hover:text-[#1B3A8C]'
+                                    : 'text-white [text-shadow:0_1px_8px_rgba(18,35,63,0.9)] hover:bg-white/15'
                                 }`}
                         >
                             {label}
+                            <span
+                                aria-hidden="true"
+                                className={`pointer-events-none absolute inset-x-3 bottom-0 h-[2px] origin-left bg-[#F97316] transition-transform duration-300 ease-out ${active ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'}`}
+                            />
                         </a>
                     ))}
                 </nav>

@@ -23,6 +23,10 @@ function toRoute(kind, doc, idx) {
         name: s.nama,
         named: true,
     }))
+    // Detail operasional diambil apa adanya dari koleksi routes (bukan data contoh).
+    const intervalMin = Number(doc.intervalMenit) > 0 ? Number(doc.intervalMenit) : null
+    const buka = doc.jamOperasional?.buka || ''
+    const tutup = doc.jamOperasional?.tutup || ''
     return {
         id: doc._id, kind, ref: doc.kodeRute, from: doc.asal, to: doc.tujuan,
         via: doc.viaDeskripsi || null, name: doc.namaRute,
@@ -30,6 +34,9 @@ function toRoute(kind, doc, idx) {
         km,
         minutes: Math.max(5, Math.round((km / SPEED[kind]) * 60)),
         fare: doc.tarif || FARE[kind],
+        tipeTarif: doc.tipeTarif || null,
+        intervalMin,
+        jamOperasional: buka && tutup ? { buka, tutup } : null,
         stops, allStops: stops, parts,
     }
 }
