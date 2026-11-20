@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, Navigate, useNavigate } from 'react-router-dom'
+import { Navigate, useNavigate } from 'react-router-dom'
 import { adminApi, session } from '../lib/adminApi'
 import { AuthShell, Field, Icon, PrimaryBtn } from './AdminUi'
 
@@ -26,10 +26,6 @@ export default function AdminLogin() {
                 <Field label="Username" icon="user" value={u} onChange={setU} placeholder="Masukkan nama pengguna" autoComplete="username" />
                 <Field label="Kata Sandi" icon="lock" type={show ? 'text' : 'password'} value={p} onChange={setP} placeholder="Masukkan kata sandi" autoComplete="current-password"
                     right={<button type="button" onClick={() => setShow(!show)} aria-label={show ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'} className="text-gray-400 transition-colors hover:text-[#1B3A8C] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]"><Icon name="eye" /></button>} />
-                <div className="flex items-center justify-between gap-3">
-                    <Link to="/admin/lupa-sandi" className="text-xs font-extrabold text-[#1B3A8C] transition-colors hover:text-[#F97316] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]">Lupa kata sandi?</Link>
-                    <span className="text-[11px] text-gray-400">Akses khusus admin</span>
-                </div>
                 {err && <p role="alert" className="border-l-4 border-red-700 bg-red-50 px-3 py-2.5 text-xs font-semibold leading-5 text-red-700">{err}</p>}
                 <PrimaryBtn disabled={busy}>{busy ? 'Memproses…' : <>Masuk ke dasbor <Icon name="arrow" /></>}</PrimaryBtn>
             </form>

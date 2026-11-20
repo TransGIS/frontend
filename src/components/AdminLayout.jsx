@@ -11,12 +11,6 @@ const GROUPS = [
             { to: '/admin/trayek/angkot', icon: 'van', text: 'Trayek Angkot Bogor' },
         ]
     },
-    {
-        label: 'Info Tarif & Rute', items: [
-            { to: '/admin/info/biskita', icon: 'bus', text: 'BisKita Trans Pakuan' },
-            { to: '/admin/info/angkot', icon: 'van', text: 'Trayek Angkot Bogor' },
-        ]
-    },
 ]
 
 const SEEN_KEY = 'transgis_notif_seen'

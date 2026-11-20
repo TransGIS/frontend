@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import heroBg from '../../../hero-section.jpeg'
 
 const P = {
     pin: <><path d="M12 21s-7-6.2-7-11a7 7 0 1114 0c0 4.8-7 11-7 11z" /><circle cx="12" cy="10" r="2.5" /></>,
@@ -35,29 +36,32 @@ export function Icon({ name, className = '' }) {
     return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={size + className} aria-hidden="true">{P[name]}</svg>
 }
 
-export function Logo({ className = '' }) {
+export function Logo({ className = '', tone = 'dark', to = '/admin/dasbor' }) {
+    const light = tone === 'light'
     return (
-        <Link to="/admin/dasbor" aria-label="TransGIS, buka dasbor admin" className={`inline-flex items-center gap-2.5 ${className}`}>
-            <span className="grid h-9 w-9 place-items-center border-2 border-[#12233F] bg-[#1B3A8C] shadow-[3px_3px_0_#12233F]">
-                <svg viewBox="0 0 24 24" className="h-5 w-5 text-white" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+        <Link to={to} aria-label="TransGIS, buka dasbor admin" className={`inline-flex items-center gap-2.5 ${className}`}>
+            <span className={`grid h-9 w-9 place-items-center border-2 ${light ? 'border-[#12233F] bg-white shadow-[3px_3px_0_rgba(18,35,63,0.55)]' : 'border-[#12233F] bg-[#1B3A8C] shadow-[3px_3px_0_#12233F]'}`}>
+                <svg viewBox="0 0 24 24" className={`h-5 w-5 ${light ? 'text-[#1B3A8C]' : 'text-white'}`} fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                     <path d="M5 17V7c0-2 2-3 7-3s7 1 7 3v10M5 13h14M8 8h8M8 17v3M16 17v3" />
                     <path d="M8 16h.01M16 16h.01" strokeWidth="3" />
                 </svg>
             </span>
-            <span className="whitespace-nowrap font-pixel text-2xl font-semibold leading-none"><span className="text-[#1B3A8C]">Trans</span><span className="text-[#F97316]">GIS</span></span>
+            <span className="whitespace-nowrap font-pixel text-2xl font-semibold leading-none">
+                <span className={light ? 'text-white [text-shadow:2px_2px_0_rgba(18,35,63,0.8)]' : 'text-[#1B3A8C]'}>Trans</span>
+                <span className={light ? 'text-[#F97316] [text-shadow:2px_2px_0_rgba(18,35,63,0.45)]' : 'text-[#F97316]'}>GIS</span>
+            </span>
         </Link>
     )
 }
 
 export function AuthShell({ title = 'Masuk ke panel admin', children }) {
     return (
-        <div className="admin-page flex min-h-screen flex-col bg-[#F7F4EA] text-[#12233F]">
-            <header className="flex h-20 items-center border-b-2 border-[#12233F] bg-white px-4 sm:px-8"><Logo /></header>
-            <main className="flex flex-1 items-center justify-center px-4 py-8 sm:px-6 sm:py-12">
+        <div className="admin-page flex min-h-screen flex-col bg-[#1A3FA0] bg-cover bg-fixed bg-center text-[#12233F]" style={{ backgroundImage: `url(${heroBg})` }}>
+            <main className="flex flex-1 items-center justify-center px-4 py-10 sm:px-6 sm:py-14">
                 <div className="grid w-full max-w-5xl border-2 border-[#12233F] bg-white shadow-[7px_7px_0_#12233F] lg:grid-cols-[0.95fr_1.05fr]">
                     <section className="relative overflow-hidden border-b-2 border-[#12233F] bg-[#1B3A8C] px-6 pb-20 pt-7 text-white sm:px-8 lg:border-b-0 lg:border-r-2 lg:px-10 lg:pb-24 lg:pt-10">
-                        <p className="font-pixel text-xl font-semibold text-[#F97316]">Area pengelola</p>
-                        <h1 className="mt-3 max-w-md font-pixel text-4xl font-semibold leading-[1.05] sm:text-5xl">Panel Admin TransGIS</h1>
+                        <Logo tone="light" to="/" />
+                        <h1 className="mt-6 max-w-md font-pixel text-4xl font-semibold leading-[1.05] text-white sm:text-5xl">Panel Admin TransGIS</h1>
                         <p className="mt-4 max-w-md text-sm leading-6 text-white/80">Kelola trayek, halte, tarif, dan aktivitas portal transportasi Bogor dari satu tempat.</p>
                         <div className="mt-7 space-y-3 text-sm font-semibold">
                             <p className="flex items-center gap-3"><span className="grid h-9 w-9 place-items-center border-2 border-white/70 bg-white/10"><Icon name="bus" className="h-5 w-5" /></span>Data BisKita dan angkot</p>

@@ -1,3 +1,4 @@
+import { useCallback, useState } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import HomePage from './pages/HomePage'
 import Navbar from './components/Navbar'
@@ -9,8 +10,8 @@ import AdminLayout from './components/AdminLayout'
 import AdminDashboard from './components/AdminDashboard'
 import AdminTrayek from './components/AdminTrayek'
 import AdminTrayekForm from './components/AdminTrayekForm'
-import AdminInfo from './components/AdminInfo'
 import CookieConsent from './components/CookieConsent'
+import Preloader, { markPreloaderSeen, shouldShowPreloader } from './components/Preloader'
 
 function Shell() {
   const { pathname } = useLocation()
@@ -31,7 +32,6 @@ function Shell() {
             <Route path="trayek/:kind" element={<AdminTrayek />} />
             <Route path="trayek/:kind/baru" element={<AdminTrayekForm />} />
             <Route path="trayek/:kind/:id/ubah" element={<AdminTrayekForm />} />
-            <Route path="info/:kind" element={<AdminInfo />} />
             <Route path="*" element={<Navigate to="/admin/dasbor" replace />} />
           </Route>
         </Routes>
@@ -43,5 +43,16 @@ function Shell() {
 }
 
 export default function App() {
-  return <Router><Shell /></Router>
+  const [showPreloader, setShowPreloader] = useState(shouldShowPreloader)
+  const finishPreloader = useCallback(() => {
+    markPreloaderSeen()
+    setShowPreloader(false)
+  }, [])
+
+  return (
+    <Router>
+      {showPreloader && <Preloader onFinish={finishPreloader} />}
+      <Shell />
+    </Router>
+  )
 }

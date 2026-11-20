@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" width="36" height="36" role="img" aria-label="TransGIS">
+  <rect x="1" y="1" width="34" height="34" fill="#1B3A8C" stroke="#12233F" stroke-width="2" />
+  <g transform="translate(9 9) scale(0.75)" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M5 17V7c0-2 2-3 7-3s7 1 7 3v10M5 13h14M8 8h8M8 17v3M16 17v3" />
+    <path d="M8 16h.01M16 16h.01" stroke-width="3" />
+  </g>
+</svg>
