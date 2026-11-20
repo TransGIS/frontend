@@ -92,11 +92,6 @@ function ProjectInfoSection() {
                         ))}
                     </ol>
                 </div>
-
-                <div className="mt-5 grid gap-2 text-xs leading-5 text-gray-500 sm:grid-cols-2 sm:gap-8">
-                    <p>Waktu dan tarif merupakan estimasi, bukan pelacakan kendaraan langsung.</p>
-                    <p className="sm:text-right">Trayek tersimpan di database proyek; peta memakai OpenStreetMap.</p>
-                </div>
             </div>
         </section>
     )

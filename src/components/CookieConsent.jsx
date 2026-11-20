@@ -20,9 +20,8 @@ export default function CookieConsent() {
             className="fixed inset-x-3 bottom-3 z-[1400] sm:inset-x-auto sm:bottom-4 sm:right-4 sm:w-[380px]"
         >
             <div className="border-2 border-[#12233F] bg-[#F7F4EA] shadow-[5px_5px_0_#12233F]">
-                <div className="flex items-center justify-between gap-3 border-b-2 border-[#12233F] bg-[#12233F] px-4 py-2">
+                <div className="flex items-center border-b-2 border-[#12233F] bg-[#12233F] px-4 py-2">
                     <h2 id="cookie-title" className="font-pixel text-base leading-none text-[#F7F4EA]">Cookie pengunjung</h2>
-                    <span className="border border-[#F7F4EA]/35 px-1.5 py-0.5 text-[10px] font-bold leading-4 text-[#F7F4EA]/80">anonim</span>
                 </div>
 
                 <div className="p-4">
@@ -32,9 +31,8 @@ export default function CookieConsent() {
 
                     {detail && (
                         <ul className="mt-3 space-y-1.5 border-t-2 border-[#12233F]/10 pt-3 text-xs leading-5 text-gray-600">
-                            <li><b className="text-[#12233F]">transgis_vid</b> — ID acak (UUID), berlaku 1 tahun, hanya dibaca backend TransGIS.</li>
-                            <li>Pilihanmu disimpan di browser ini, bukan di server.</li>
-                            <li>Menolak? Kunjungan tetap dihitung; hanya statistik pengunjung unik yang tidak bertambah.</li>
+                            <li>Pilihanmu akan disimpan di browser ini.</li>
+                            <li>Menolak? Kunjungan tetap dihitung. Hanya statistik pengunjung unik yang tidak bertambah.</li>
                         </ul>
                     )}
 

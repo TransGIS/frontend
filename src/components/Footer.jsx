@@ -22,7 +22,7 @@ function Footer() {
                         </span>
                     </a>
                     <p className="mt-5 text-sm leading-7 text-[#F7F4EA]/70">
-                        Panduan perjalanan BisKita, angkot, dan jalan kaki di Kota Bogor—dalam satu pencarian.
+                        Cari rute BisKita dan angkot, lengkap dengan titik transit, jalan kaki, estimasi waktu, dan tarif.
                     </p>
                 </div>
 
@@ -60,9 +60,8 @@ function Footer() {
             </div>
 
             <div className="border-t border-[#F7F4EA]/15">
-                <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-5 text-xs leading-5 text-[#F7F4EA]/55 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
-                    <p>© {new Date().getFullYear()} TransGIS. Peta dari OpenStreetMap.</p>
-                    <p>Waktu dan tarif perjalanan merupakan estimasi.</p>
+                <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-5 text-xs leading-5 text-[#F7F4EA]/55 sm:flex-row sm:items-center sm:px-6 lg:px-8">
+                    <p>© {new Date().getFullYear()} TransGIS.</p>
                 </div>
             </div>
         </footer>
